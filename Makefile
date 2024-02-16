@@ -10,9 +10,10 @@ INC_DIR = incl
 
 SRCS = main.cpp \
 		Server.cpp \
-		User.cpp \
+		Client.cpp \
 		Message.cpp \
-		commands.cpp
+		commands.cpp \
+		utils.cpp 
 
 OBJS = $(SRCS:%.cpp=%.o)
 OBJS_DIR = $(addprefix $(OBJ_DIR)/,$(OBJS))

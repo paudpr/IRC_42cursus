@@ -13,9 +13,9 @@ bool Server::check_availability(std::string& nick, std::string& client_nick)
 		return true;
 	std::string aux(nick);
 	to_lower(aux);
-	for (std::vector<User>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
 	{
-		std::string str((*iter).nickname);
+		std::string str((*iter)->nickname);
 		to_lower(str);
 		if (str == aux)
 			return false;
@@ -26,22 +26,24 @@ bool Server::check_availability(std::string& nick, std::string& client_nick)
 void Server::nick(const int& fd, Message& message)
 {
 	std::cout << YELLOW << "Command nick" << RESET << std::endl;
-	std::vector<User>::iterator client = get_client_byfd(fd);
-	if ((*client).is_online == false)
+	std::vector<Client*>::iterator client = get_client_byfd(fd);
+	if ((*client)->is_online == false)
 		return  send_message(fd, "CLIENT not connected, can't change nick");
+	std::cout << "ya no se si estoy llegando aqui o no" << std::endl;
 	if (message.args.empty())
-		return send_message(fd, ERR_NONICKNAMEGIVEN((*client).get_fullname()));
+		return send_message(fd, ERR_NONICKNAMEGIVEN((*client)->get_fullname()));
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
 		|| message.args[0].find(" ,*?!@.") != std::string::npos)
 		return send_message(fd, "ERROR nick erróneo");
-	if (!check_availability(message.args[0], (*client).nickname))
+	if (!check_availability(message.args[0], (*client)->nickname))
 		return send_message(fd, "ERROR nick ya en uso");
-	(*client).nickname = message.args[0];
+	(*client)->nickname = message.args[0];
 	//change nickname in all channels with necessary messages
 	send_message(fd, "Enviar  mensaje correcto de haber cambiado el nick");
-	//validate user
+	//validate Client
+	// check_is_valid(const int& fd, const)
 	
 }
 

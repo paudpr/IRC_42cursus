@@ -20,8 +20,7 @@ Server&		Server::operator=(const Server& other)
 {
 	if (this != &other) {
 		fds_poll = other.fds_poll;
-		map_fd_users = other.map_fd_users;
-		// users_nick = other.users_nick;
+		map_fd_clients = other.map_fd_clients;
 		// channels = other.channels;
 		// commands = other.commands;
 		server_size = other.server_size;
@@ -37,7 +36,7 @@ Server&		Server::operator=(const Server& other)
 	return *this;
 }
 
-std::string& Server::get_hostname()
+std::string Server::get_hostname()
 {
 	char hostname[HOSTNAME_LEN];
 	struct hostent* entry;
@@ -86,7 +85,6 @@ void	Server::init()
 	}
 }
 
-
 void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	int							fd_connection;
 	struct pollfd				poll_connection;
@@ -97,34 +95,36 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 
 	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
 
-	if (map_fd_users.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
+	if (map_fd_clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
 	{
-		close(fd_connection);
 		// send_msg( "Too many clients connected already"); // enviar mensaje al cliente de que no se puede conectar
-		throw std::runtime_error("[ ERROR ] Too many client connections");
+		std::cout <<  "[ ERROR ] Too many client connections" << std::endl;
+		close(fd_connection);
+		// throw std::runtime_error("[ ERROR ] Too many client connections");
 	}
 
 	fcntl(fd_connection, F_SETFL, O_NONBLOCK);
 	fds_poll.push_back(poll_connection);
 	iter = fds_poll.begin();
 
-	User	user(fd_connection, conn_addr.sin_addr, this);
-	map_fd_users.insert(std::make_pair(fd_connection, user));
-	clients.push_back(user);
+	Client	*client = new Client(fd_connection, conn_addr.sin_addr, this);
+	map_fd_clients.insert(std::make_pair(fd_connection, client));
+	client->is_online = true;
+	clients.push_back(client);
 
 	std::cout << CYAN << "Client: " << fd_connection << " from " << inet_ntoa(conn_addr.sin_addr)
 		<< ":" << ntohs(conn_addr.sin_port) << " connected." << RESET << std::endl;
 
-	// send(fd_connection, )
+	send_message(iter->fd, "Now connected to esteproyectoponlocomosea");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 {
-	map_fd_users[iter->fd].is_online = false;
+	map_fd_clients[iter->fd]->is_online = false;
 
 	//abandonar channels
 
-	map_fd_users.erase(iter->fd);
+	map_fd_clients.erase(iter->fd);
 	send_leftovers.erase(iter->fd);
 	recv_leftovers.erase(iter->fd);
 
@@ -137,11 +137,11 @@ void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 	fds_poll.erase(iter);
 }
 
-std::vector<User>::iterator Server::get_client_byfd(int fd)
+std::vector<Client*>::iterator Server::get_client_byfd(int fd)
 {
-	for (std::vector<User>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
 	{
-		if (iter->fd == fd)
+		if ((*iter)->fd == fd)
 			return iter;
 	}
 	return clients.end();
@@ -163,12 +163,12 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		return ;
 	}
 
-	std::vector<User>::iterator client = get_client_byfd(iter->fd);	//version sentido comun
-	msg = (*client).receive_leftovers;
+	std::vector<Client*>::iterator client = get_client_byfd(iter->fd);	//version sentido comun
+	msg = (*client)->receive_leftovers;
 	msg.append(buffer);
 	size_t pos = msg.find('\n');
 	if (pos != std::string::npos)
-		(*client).receive_leftovers.clear();
+		(*client)->receive_leftovers.clear();
 	
 	std::vector<std::string> split = split_msg();
 	for (std::vector<std::string>::iterator it = split.begin(); it != split.end(); it++)
@@ -177,9 +177,11 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 			if (message.cmd == "PASS" || message.cmd == "USER" || message.cmd == "NICK" 
-				|| (*client).mode & VALID_USER)
-				(this->*(*cmd))((*client).fd, message);
-
+				|| (*client)->mode & VALID_CLIENT)
+			{	
+				std::cout << message.message << std::endl;
+				(this->*(*cmd))((*client)->fd, message);
+			}
 	}
 }
 
@@ -208,15 +210,6 @@ std::vector<std::string> Server::split_msg(void)
 	return (split);
 }
 
-std::map<int, User>::iterator Server::get_user(int fd)
-{
-	for (std::map<int, User>::iterator iter = map_fd_users.begin(); iter != map_fd_users.end(); iter++)
-	{
-		if (iter->first == fd)
-			return iter;
-	}
-	return map_fd_users.end();
-}
 
 void	Server::start()
 {
@@ -257,10 +250,11 @@ void	Server::start()
 			}
 			else if (iter->revents & POLLOUT) //filedescritor is ready for writing
 			{
-				if (!(*(get_client_byfd(iter->fd))).send_leftovers.empty())
+				if (!(*(get_client_byfd(iter->fd)))->send_leftovers.empty())
 				{
-					send_message(iter->fd, (*(get_client_byfd(iter->fd))).send_leftovers);
-					(*(get_client_byfd(iter->fd))).send_leftovers.clear();
+					std::cout << "gestionar restos" << std::endl;
+					// send_message(iter->fd, (*(get_client_byfd(iter->fd))).send_leftovers);
+					(*(get_client_byfd(iter->fd)))->send_leftovers.clear();
 				}
 			}
 		}
@@ -297,9 +291,9 @@ void Server::send_message(const int &fd, std::string message)
 	}
 	if (read < message.size())
 	{
-		std::vector<User>::iterator client = get_client_byfd(fd);
-		(*client).send_leftovers = message.substr(read);
+		std::vector<Client*>::iterator client = get_client_byfd(fd);
+		(*client)->send_leftovers = message.substr(read);
 	}
-	std::cout << LIGHT_CYAN << "[S] " << print_time() << "Sent to client " << fd << " message:" << std::endl;
+	std::cout << LIGHT_CYAN << print_time() << "Sent to client [fd=" << fd << "] message:" << std::endl;
 	std::cout << "\t" << message << RESET << std::endl;
 }

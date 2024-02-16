@@ -8,7 +8,6 @@
 # include <netdb.h>
 # include <stdlib.h>
 # include <signal.h>
-# include <unistd.h>
 # include <arpa/inet.h>
 # include <sys/socket.h>
 
@@ -24,10 +23,10 @@
 
 
 # include "Server.hpp"
-# include "User.hpp"
+# include "Client.hpp"
 # include "Message.hpp"
 # include "utils.hpp"
-# include "Replies.hpp"
+# include "replies.hpp"
 
 # define BACKLOG 5
 # define HOSTNAME_LEN 32
@@ -36,10 +35,10 @@
 # define POLL_TIMEOUT_MS 3000
 # define PINGPONG_FREQ_S 120
 # define PINGPONG_TIMEOUT_S 30
-# define MAX_NICK_LEN 9
+# define MAX_NICK_LEN 16
 
 
-# define VALID_USER 0b1000
+# define VALID_CLIENT 0b1000
 
 
 # define RESET "\033[0m"

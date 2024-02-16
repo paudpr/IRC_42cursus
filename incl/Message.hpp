@@ -4,7 +4,7 @@
 
 class Message
 {
-	friend class User;
+	friend class Client;
 	friend class Server;
 
 	public:

@@ -4,7 +4,7 @@
 
 class Server;
 
-class User {
+class Client {
 	friend class Server;
 	friend class Channel;
 
@@ -12,26 +12,26 @@ class User {
 		// typedef map<string, Channel*>		channel_map;
 		// typedef Server::flag_map			flag_map;
 
-		User();
-		User(int i_fd, in_addr address, Server* i_server);
-		User(const User &other);
-		~User();
+		Client();
+		Client(int i_fd, in_addr address, Server* i_server);
+		Client(const Client &other);
+		~Client();
 
-		User &operator=(const User &other);
+		Client &operator=(const Client &other);
 		// void				setMode(const Message &cmd);
 		// void				displayMode() const;
 
 		// const string		&getNickname() const;
 		std::string get_next_command(void);
-		std::string& get_fullname();
-		User& get_user_by_fd(int fd, std::map<int, User> fds_users);
+		std::string get_fullname();
+		Client& get_client_by_fd(int fd, std::map<int, Client> fds_clients);
 
 	private:
 		// channel_map			channels;
 		// static flag_map		flags;
 		std::string				nickname;
 		std::string				passwd;
-		std::string				username;
+		std::string				name;
 		std::string				hostname;
 		std::string				fullname;
 		std::string				ping_key;
