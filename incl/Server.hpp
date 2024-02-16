@@ -51,10 +51,8 @@ class Server {
 	private:
 		std::map<std::string, std::string>	oper_status;
 		std::vector<ptr> commands;
-		std::map<int, Client*> map_fd_clients;
 		std::vector<Client*> clients;
-		std::map<int, std::string> recv_leftovers;
-		std::map<int, std::string> send_leftovers;
+
 
 		
 		std::vector<pollfd> fds_poll;
@@ -75,6 +73,10 @@ class Server {
 		void save_commands();
 		std::vector<ptr>::iterator get_command(std::string& name);
 		void send_message(const int& fd, std::string message);
+		
+		
+		std::map<int, std::string> recv_leftovers;	//sin uso, rompen la conexión por algún motivo
+		std::map<int, std::string> send_leftovers;
 };
 
 // extern bool *killSwitch;

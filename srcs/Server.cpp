@@ -20,7 +20,6 @@ Server&		Server::operator=(const Server& other)
 {
 	if (this != &other) {
 		fds_poll = other.fds_poll;
-		map_fd_clients = other.map_fd_clients;
 		// channels = other.channels;
 		// commands = other.commands;
 		server_size = other.server_size;
@@ -95,7 +94,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 
 	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
 
-	if (map_fd_clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
+	if (clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
 	{
 		// send_msg( "Too many clients connected already"); // enviar mensaje al cliente de que no se puede conectar
 		std::cout <<  "[ ERROR ] Too many client connections" << std::endl;
@@ -108,7 +107,6 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	iter = fds_poll.begin();
 
 	Client	*client = new Client(fd_connection, conn_addr.sin_addr, this);
-	map_fd_clients.insert(std::make_pair(fd_connection, client));
 	client->is_online = true;
 	clients.push_back(client);
 
@@ -120,13 +118,10 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 {
-	map_fd_clients[iter->fd]->is_online = false;
-
+	std::vector<Client*>::iterator client = get_client_byfd(iter->fd);
+	(*client)->is_online = false;
+	
 	//abandonar channels
-
-	map_fd_clients.erase(iter->fd);
-	send_leftovers.erase(iter->fd);
-	recv_leftovers.erase(iter->fd);
 
 	std::cout << RED << "[Server]: Client " << iter->fd
 		<< " from " << inet_ntoa(conn_addr.sin_addr)
@@ -135,6 +130,7 @@ void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 
 	close(iter->fd);
 	fds_poll.erase(iter);
+	delete (*client);
 }
 
 std::vector<Client*>::iterator Server::get_client_byfd(int fd)
