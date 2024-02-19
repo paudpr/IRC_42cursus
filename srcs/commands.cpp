@@ -25,13 +25,12 @@ bool Server::check_availability(std::string& nick, std::string& client_nick)
 
 void Server::nick(const int& fd, Message& message)
 {
-	std::cout << YELLOW << "Command nick" << RESET << std::endl;
+	// std::cout << YELLOW << "Command nick" << RESET << std::endl;
 	std::vector<Client*>::iterator client = get_client_byfd(fd);
 	if ((*client)->is_online == false)
 		return  send_message(fd, "CLIENT not connected, can't change nick");
-	std::cout << "ya no se si estoy llegando aqui o no" << std::endl;
 	if (message.args.empty())
-		return send_message(fd, ERR_NONICKNAMEGIVEN((*client)->get_fullname()));
+		return send_message(fd, ERR_NONICKNAMEGIVEN((*client)->get_realname()));
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
@@ -39,22 +38,64 @@ void Server::nick(const int& fd, Message& message)
 		return send_message(fd, "ERROR nick erróneo");
 	if (!check_availability(message.args[0], (*client)->nickname))
 		return send_message(fd, "ERROR nick ya en uso");
+
+	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
+	// std::cout << RED <<  (*client)->nickname << "-" << prev << "-" << RESET << std::endl;
+
 	//change nickname in all channels with necessary messages
-	send_message(fd, "Enviar  mensaje correcto de haber cambiado el nick");
-	//validate Client
-	// check_is_valid(const int& fd, const)
+	std::string msg  = ":" + prev + "!~" /*+ get_hostname() */+ " NICK " + (*client)->nickname; 
+	send_message(fd, msg);
+
+	check_valid_user(*client);
 	
 }
-
 
 void Server::user(const int& fd, Message& message)
 {
 	(void)fd;
 	(void)message;
+	
 	std::cout << LIGHT_BLUE << "Command user" << RESET << std::endl;
+	std::vector<Client*>::iterator client = get_client_byfd(fd);
+	if ((*client)->is_online == false)
+		return  send_message(fd, "CLIENT not connected, can't change user");
+	if (message.args.size() < 4)
+		return send_message(fd, ERR_NEEDMOREPARAMS((*client)->get_realname()));
+	if ((*client)->username.empty() == false)
+		return send_message(fd, ERR_ALREADYREGISTERED((*client)->get_realname()));
+	(*client)->username = message.args[0];
+	(*client)->hostname = inet_ntoa(conn_addr.sin_addr);
+	if (message.args.size() >= 4)
+		(*client)->realname = join_split(message.args, 3);
+	if ((*client)->realname[0] == ':')
+		(*client)->realname.erase(0, 1);
+	check_valid_user(*client);
 }
 
+void send_welcome(Client *client)
+{
+	(void)  client;
+	std::cout << PINK << "enviar mensajes de  ahberse  podido conectar. solo pasa una vez" << std::endl;
+	std::cout << "[001]" << std::endl;
+	std::cout << "[002]" << std::endl;
+	std::cout << "[003]" << std::endl;
+	std::cout << "[004]" << RESET << std::endl;
+	//no  son prints, con enviar mensajes, pero lo que sea
+}
+
+bool Server::check_valid_user(Client *client)
+{
+	if (client->nickname.empty() || client->username.empty() || (client->mode & VALID_CLIENT))
+		return false;
+	if (!client->nickname.empty() && !client->username.empty() && !(client->mode & VALID_CLIENT))
+	{
+		client->mode |= VALID_CLIENT;
+		client->ping_request = false;
+		send_welcome(client);
+	}
+	return true;
+}
 
 void Server::whois(const int& fd, Message& message)
 {

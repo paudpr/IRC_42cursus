@@ -15,19 +15,11 @@ class Server {
 
 	public:
 		typedef void (Server::*ptr)(const int&, Message&);
-		// typedef map<int, Client>						std::map<int, Client>;
-		// typedef map<stringKey, Client *>				Clientnick_map;
-		// typedef map<const stringKey, class Channel>	channel_map;
-		// typedef vector<pollfd>						std::vector<pollfd>;
-		// typedef std::map<std::string, std::string>					opCredentials_t;
-
-		// typedef map<char, ModeFlag *>				flag_map;
-		// typedef map<int, string>					std::map<int, std::string>;
 
 		Server();
 		~Server();
 		Server(const Server& copy);
-		Server&			operator=(const Server& other);
+		Server& operator=(const Server& other);
 
 		bool check_args(char *argv_port, char *argv_pass);
 		void init();
@@ -47,24 +39,23 @@ class Server {
 		void whois(const int& fd, Message& message);
 
 		bool check_availability(std::string& nick, std::string& client_nick);
+		bool check_valid_user(Client *client);
+
+		void send_message(const int& fd, std::string message);
 
 	private:
 		std::map<std::string, std::string>	oper_status;
 		std::vector<ptr> commands;
 		std::vector<Client*> clients;
-
-
-		
 		std::vector<pollfd> fds_poll;
 
 		socklen_t		server_size;
 		socklen_t		conn_size;
 		sockaddr_in		server_addr;
 		sockaddr_in		conn_addr;
-		std::string			hostname;
-		std::string			server_passwd;
-		std::string			timestamp_creation;
-		// char			buffer[BUFFER];
+		std::string		hostname;
+		std::string		server_passwd;
+		std::string		timestamp_creation;
 		int				server_fd;
 		int				server_port;
 		bool			online;
@@ -72,11 +63,6 @@ class Server {
 
 		void save_commands();
 		std::vector<ptr>::iterator get_command(std::string& name);
-		void send_message(const int& fd, std::string message);
 		
-		
-		std::map<int, std::string> recv_leftovers;	//sin uso, rompen la conexión por algún motivo
-		std::map<int, std::string> send_leftovers;
-};
 
-// extern bool *killSwitch;
+};

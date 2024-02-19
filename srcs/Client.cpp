@@ -8,7 +8,7 @@ Client::Client() : is_online(false) {
 	memset(this, 0, sizeof(*this));
 }
 
-Client::Client(int i_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(i_fd), mode(0), is_online(false) 
+Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(input_fd), mode(0), is_online(false) 
 {
 	timestamp = std::time(NULL);
 	ping_request = true;
@@ -25,9 +25,9 @@ Client	&Client::operator=(const Client &other) {
 	fd = other.fd;
 	nickname = other.nickname;
 	passwd = other.passwd;
-	name = other.name;
+	username = other.username;
 	hostname = other.hostname;
-	fullname = other.fullname;
+	realname = other.realname;
 	// channels = other.channels;
 	return (*this);
 }
@@ -53,8 +53,8 @@ std::string Client::get_next_command(void)
 	return command;
 }
 
-std::string Client::get_fullname()
+std::string Client::get_realname()
 {
-	std::string fullname = nickname + "!" + name + "@" + hostname;
-	return fullname;
+	std::string realname = nickname + "!" + username + "@" + hostname;
+	return realname;
 }

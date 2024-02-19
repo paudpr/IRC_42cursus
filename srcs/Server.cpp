@@ -88,18 +88,17 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	int							fd_connection;
 	struct pollfd				poll_connection;
 
+	// std::cout << "----------------------------> " << fds_poll.begin()->fd << std::endl;
 	fd_connection = accept(fds_poll.begin()->fd, (sockaddr*)&conn_addr, &conn_size);
+	// std::cout << "-----------------> " << fd_connection << "-" << iter->fd << std::endl;
 	if (fd_connection < 0)
 		throw std::runtime_error("[ ERROR ] Accept failed");
-
 	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
-
 	if (clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
 	{
 		// send_msg( "Too many clients connected already"); // enviar mensaje al cliente de que no se puede conectar
 		std::cout <<  "[ ERROR ] Too many client connections" << std::endl;
 		close(fd_connection);
-		// throw std::runtime_error("[ ERROR ] Too many client connections");
 	}
 
 	fcntl(fd_connection, F_SETFL, O_NONBLOCK);
@@ -113,14 +112,14 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	std::cout << CYAN << "Client: " << fd_connection << " from " << inet_ntoa(conn_addr.sin_addr)
 		<< ":" << ntohs(conn_addr.sin_port) << " connected." << RESET << std::endl;
 
-	send_message(iter->fd, "Now connected to esteproyectoponlocomosea");
+	// send_message(fd_connection, "Now connected to esteproyectoponlocomosea");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 {
 	std::vector<Client*>::iterator client = get_client_byfd(iter->fd);
 	(*client)->is_online = false;
-	
+
 	//abandonar channels
 
 	std::cout << RED << "[Server]: Client " << iter->fd
@@ -173,11 +172,8 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 			if (message.cmd == "PASS" || message.cmd == "USER" || message.cmd == "NICK" 
-				|| (*client)->mode & VALID_CLIENT)
-			{	
-				std::cout << message.message << std::endl;
+				|| check_valid_user(*client))
 				(this->*(*cmd))((*client)->fd, message);
-			}
 	}
 }
 
@@ -217,11 +213,7 @@ void	Server::start()
 
 	std::cout << GREEN << "IRC Server started and listening at " << server_port << RESET << std::endl;
 
-	// time_t		current_time;
-	// time(&current_time);
-	// timestamp_creation = ctime(&current_time);
-	// timestamp_creation.resize(timestamp_creation.size() - 1);
-	// std::cout << GREEN << timestamp_creation << RESET << std::endl;
+	//gestionar  tiempo
 
 	while (online) {
 		int poll_count = poll(fds_poll.begin().base(), (nfds_t)fds_poll.size(), POLL_TIMEOUT_MS);
@@ -229,12 +221,6 @@ void	Server::start()
 			throw std::runtime_error("[ ERROR ] Poll");
 		for (std::vector<pollfd>::iterator iter = fds_poll.begin(); iter < fds_poll.end(); iter++)
 		{
-			// if (iter->revents != POLLIN && iter->revents != 17)
-			// {
-			// 	std::cout << ORANGE << "[ ERROR ] Revents" << RESET << std::endl;
-			// 	online = false;
-			// 	break ;
-			// }
 			if (iter->revents & POLLHUP)
 				remove_client(iter);
 			else if (iter->revents & POLLIN)
@@ -279,7 +265,9 @@ std::string Server::print_time()
 
 void Server::send_message(const int &fd, std::string message)
 {
-	size_t read = send(fd, message.c_str(), message.size(), 0);
+	// size_t		sent = send(fd, &msg[0], size, flags);
+
+	size_t read = send(fd, &message, message.length(), 0);
 	if (read < 0)
 	{
 		std::cout << "[ ERROR ] Send() failed" <<  std::endl;
