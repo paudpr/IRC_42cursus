@@ -20,8 +20,7 @@ Server&		Server::operator=(const Server& other)
 {
 	if (this != &other) {
 		fds_poll = other.fds_poll;
-		// channels = other.channels;
-		// commands = other.commands;
+		commands = other.commands;
 		server_size = other.server_size;
 		conn_size = other.conn_size;
 		server_addr = other.server_addr;
@@ -29,7 +28,6 @@ Server&		Server::operator=(const Server& other)
 		hostname = other.hostname;
 		server_fd = other.server_fd;
 		server_port = other.server_port;
-		oper_status = other.oper_status;
 		save_commands();
 	}
 	return *this;
@@ -88,9 +86,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	int							fd_connection;
 	struct pollfd				poll_connection;
 
-	// std::cout << "----------------------------> " << fds_poll.begin()->fd << std::endl;
 	fd_connection = accept(fds_poll.begin()->fd, (sockaddr*)&conn_addr, &conn_size);
-	// std::cout << "-----------------> " << fd_connection << "-" << iter->fd << std::endl;
 	if (fd_connection < 0)
 		throw std::runtime_error("[ ERROR ] Accept failed");
 	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
@@ -255,6 +251,7 @@ void Server::save_commands()
 	commands.push_back(&Server::nick);
 	commands.push_back(&Server::pass);
 	commands.push_back(&Server::user);
+	commands.push_back(&Server::quit);
 }
 
 std::string Server::print_time()
@@ -265,8 +262,6 @@ std::string Server::print_time()
 
 void Server::send_message(const int &fd, std::string message)
 {
-	// size_t		sent = send(fd, &msg[0], size, flags);
-
 	size_t read = send(fd, &message, message.length(), 0);
 	if (read < 0)
 	{

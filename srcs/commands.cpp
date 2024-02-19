@@ -25,7 +25,6 @@ bool Server::check_availability(std::string& nick, std::string& client_nick)
 
 void Server::nick(const int& fd, Message& message)
 {
-	// std::cout << YELLOW << "Command nick" << RESET << std::endl;
 	std::vector<Client*>::iterator client = get_client_byfd(fd);
 	if ((*client)->is_online == false)
 		return  send_message(fd, "CLIENT not connected, can't change nick");
@@ -41,22 +40,15 @@ void Server::nick(const int& fd, Message& message)
 
 	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
-	// std::cout << RED <<  (*client)->nickname << "-" << prev << "-" << RESET << std::endl;
 
 	//change nickname in all channels with necessary messages
 	std::string msg  = ":" + prev + "!~" /*+ get_hostname() */+ " NICK " + (*client)->nickname; 
 	send_message(fd, msg);
-
 	check_valid_user(*client);
-	
 }
 
 void Server::user(const int& fd, Message& message)
 {
-	(void)fd;
-	(void)message;
-	
-	std::cout << LIGHT_BLUE << "Command user" << RESET << std::endl;
 	std::vector<Client*>::iterator client = get_client_byfd(fd);
 	if ((*client)->is_online == false)
 		return  send_message(fd, "CLIENT not connected, can't change user");
@@ -99,11 +91,26 @@ bool Server::check_valid_user(Client *client)
 
 void Server::whois(const int& fd, Message& message)
 {
-	
-(void)fd;
+	(void)fd;
 	(void)message;
+}
 
+void Server::quit(const int& fd, Message& message)
+{
+	std::string msg = join_split(message.args, 0);
+	msg = "QUIT: " + msg;
+	std::cout << "COSAS " <<  std::endl;
+	std::cout << YELLOW << msg << RESET << std::endl;
+	send_message(fd, msg);
 
+	std::vector<pollfd>::iterator iter;
+	for (iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
+	{
+		if (iter->fd == fd)
+			break ;
+	}
+	remove_client(iter);
+	//abandonar channel y notificar a usuarios en el canal
 
 
 }

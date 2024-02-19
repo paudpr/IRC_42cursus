@@ -12,8 +12,6 @@ class Message
 		Message(std::string& msg);
 		Message(char* msg_char);
 		Message& operator=(Message& other);
-		bool operator==(const Message& other) const;
-		bool operator<(const Message& other) const;
 
 	private:
 		std::string cmd;

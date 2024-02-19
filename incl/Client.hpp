@@ -21,14 +21,12 @@ class Client {
 
 	private:
 		std::string				nickname;
-		std::string				passwd;
+		std::string				password;
 		std::string				username;
 		std::string				hostname;
 		std::string				realname;
 		std::string				ping_key;
 		Server*				server;
-		time_t				timestamp;
-		time_t				timestamp_login;
 		int					fd;
 		char				mode;
 		bool				is_online;

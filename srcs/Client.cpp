@@ -1,8 +1,5 @@
 
 #include "Client.hpp"
-// #include "Channel.hpp"
-// #include "utils.hpp"
-// #include "ModeFlag.hpp"
 
 Client::Client() : is_online(false) {
 	memset(this, 0, sizeof(*this));
@@ -10,7 +7,6 @@ Client::Client() : is_online(false) {
 
 Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(input_fd), mode(0), is_online(false) 
 {
-	timestamp = std::time(NULL);
 	ping_request = true;
 }
 
@@ -24,11 +20,10 @@ Client	&Client::operator=(const Client &other) {
 	mode = other.mode;
 	fd = other.fd;
 	nickname = other.nickname;
-	passwd = other.passwd;
+	password = other.password;
 	username = other.username;
 	hostname = other.hostname;
 	realname = other.realname;
-	// channels = other.channels;
 	return (*this);
 }
 
@@ -39,7 +34,8 @@ Client& Client::get_client_by_fd(int fd, std::map<int, Client> fds_clients)
 		if (iter->first == fd)
 			return (iter->second);
 	}
-	throw std::runtime_error("[ ERROR ] Can't get Client");	//si tiro excepcion rompo todo? cambiar por mensaje de error normal
+	std::cout << "[ ERROR ] Can't get Client" << std::endl;
+	return (fds_clients.end()->second);
 }
 
 std::string Client::get_next_command(void)
