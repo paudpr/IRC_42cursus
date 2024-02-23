@@ -17,3 +17,18 @@ std::string join_split(std::vector<std::string> array,  size_t start_pos)
 	}
 	return joined;
 }
+
+char generate_random(void)
+{
+	static const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	size_t index = rand() % std::strlen(charset);
+	return  charset[index];
+}
+
+std::string generate_token(void)
+{
+	srand(static_cast<unsigned int>(time(NULL)));
+	std::string token(LEN_TOKEN, '\0');
+	std::generate(token.begin(), token.end(), generate_random);
+	return token;
+}

@@ -32,6 +32,8 @@ class Server {
 		void user(const int& fd, Message& message);
 		void whois(const int& fd, Message& message);
 		void quit(const int& fd, Message& message);
+		void ping(const int& fd, Message& message);
+		void pong(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -55,7 +57,7 @@ class Server {
 		sockaddr_in		conn_addr;
 		std::string		hostname;
 		std::string		server_passwd;
-		std::string		timestamp_creation;
+		std::string		time_init;
 		std::string		msg;
 
 		std::string get_hostname();

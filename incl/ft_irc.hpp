@@ -32,9 +32,10 @@
 # define BUFFER 512
 # define IRC_ENDLINE "\r\n"
 # define POLL_TIMEOUT_MS 3000
-# define PINGPONG_FREQ_S 120
-# define PINGPONG_TIMEOUT_S 30
+# define PING_FREQ 15
+# define PING_TIMEOUT 30
 # define MAX_NICK_LEN 16
+# define LEN_TOKEN 8
 
 
 # define VALID_CLIENT 0b1000

@@ -8,6 +8,8 @@ Client::Client() : is_online(false) {
 Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(input_fd), mode(0), is_online(false) 
 {
 	ping_request = true;
+	time_init = std::time(NULL);
+	time_now = std::time(NULL);
 }
 
 Client::Client(const Client &other) : is_online(false) { *this = other; }
@@ -25,6 +27,11 @@ Client	&Client::operator=(const Client &other) {
 	hostname = other.hostname;
 	realname = other.realname;
 	return (*this);
+}
+
+bool Client::operator==(const Client &other)
+{
+	return (fd == other.fd && nickname == other.nickname);
 }
 
 Client& Client::get_client_by_fd(int fd, std::map<int, Client> fds_clients)

@@ -97,6 +97,7 @@ void Server::whois(const int& fd, Message& message)
 
 void Server::quit(const int& fd, Message& message)
 {
+	std::cout << "QUIE PASA" << std::endl;
 	std::string msg = join_split(message.args, 0);
 	msg = "QUIT: " + msg;
 	std::cout << "COSAS " <<  std::endl;
@@ -113,4 +114,32 @@ void Server::quit(const int& fd, Message& message)
 	//abandonar channel y notificar a usuarios en el canal
 
 
+}
+
+void Server::ping(const int& fd, Message& message)
+{
+	// Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 1)
+		return send_message(fd, "ERR_NEEDMOREPARAMS cosas cosas");
+	std::string arg = join_split(message.args, 0);
+	send_message(fd, "PONG: " + arg);
+}
+
+void Server::pong(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 1)
+		return send_message(fd, "mensaje  de que  tiene que aber un token. ERR_NEEDMOREPARAMS");
+	if (client->ping_request == false)
+		return ;
+	if (message.args[0] == client->ping_token || message.args[0] == hostname)
+	{
+		client->ping_request = false;
+		client->time_now = std::time(NULL);
+	}
+	else
+	{
+		send_message(fd, "ERROR TOKEN  INVALIDO");
+		return ; //?¿?¿?¿?¿?¿?¿?¿? investigar  como salir de aqui;
+	}
 }

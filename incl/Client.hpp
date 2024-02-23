@@ -15,6 +15,8 @@ class Client {
 		~Client();
 
 		Client &operator=(const Client &other);
+		bool operator==(const  Client &other);
+		
 		std::string get_next_command(void);
 		std::string get_realname();
 		Client& get_client_by_fd(int fd, std::map<int, Client> fds_clients);
@@ -25,12 +27,14 @@ class Client {
 		std::string				username;
 		std::string				hostname;
 		std::string				realname;
-		std::string				ping_key;
 		Server*				server;
+		time_t				time_init;
+		time_t				time_now;
 		int					fd;
 		char				mode;
 		bool				is_online;
 		bool				ping_request;
+		std::string			ping_token;
 
 		std::string send_leftovers;
 		std::string receive_leftovers;
