@@ -61,3 +61,4 @@ std::string Client::get_realname()
 	std::string realname = nickname + "!" + username + "@" + hostname;
 	return realname;
 }
+

@@ -86,9 +86,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	int							fd_connection;
 	struct pollfd				poll_connection;
 
-	fd_connection = accept(fds_poll.begin()->fd, (sockaddr*)&connection_addr, &connection_size);
-	std::cout << ORANGE <<  iter->fd << "-" << fd_connection << RESET << std::endl;
-
+	fd_connection = accept(iter->fd, (sockaddr*)&connection_addr, &connection_size);
 	if (fd_connection < 0)
 		throw std::runtime_error("[ ERROR ] Accept failed");	// cambiar a mensaje de error?
 	if (clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
@@ -104,20 +102,14 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	iter = fds_poll.begin();
 
 	Client	*client = new Client(fd_connection, connection_addr.sin_addr, this);
-	std::cout << "\nfdclient-> " << client->fd  <<  RESET <<  std::endl;
 	client->is_online = true;
 	client->ping_request = true;
 	clients.push_back(client);
-
-	const char* message = "PROBANDO CONEXION";
-	size_t read = send(fd_connection, message, strlen(message), 0);
-	if (read < 0)
-		std::cout << "CABRON" << std::endl;
 	
-	std::cout << CYAN << "Client: " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
+	std::cout << CYAN << "[Server]: Client " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
 		<< ":" << ntohs(connection_addr.sin_port) << " connected." << RESET << std::endl;
 
-	// send_message(fd_connection, "Now connected to esteproyectoponlocomosea");
+	send_message(fd_connection, "Now connected to esteproyectoponlocomosea");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
@@ -326,6 +318,5 @@ void Server::send_message(const int &fd, std::string message)
 		std::vector<Client*>::iterator client = get_client_byfd(fd);
 		(*client)->send_leftovers = message.substr(read);
 	}
-	std::cout << LIGHT_CYAN << print_time() << "Sent to client [fd=" << fd << "] message:" << std::endl;
-	// std::cout << "\t" << message << RESET << std::endl;
+	std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }

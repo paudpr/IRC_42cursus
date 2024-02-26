@@ -32,3 +32,16 @@ std::string generate_token(void)
 	std::generate(token.begin(), token.end(), generate_random);
 	return token;
 }
+
+std::string get_time(void)
+{
+	time_t tt;
+	struct tm *tt_info;
+	char  buffer[50];
+
+	time(&tt);
+	tt_info = localtime(&tt);
+	strftime(buffer, 50, "[%d/%m/%Y][%H:%M:%S]", tt_info);
+	std::string str(buffer);
+	return str;
+}

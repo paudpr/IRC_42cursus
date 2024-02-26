@@ -65,14 +65,19 @@ void Server::user(const int& fd, Message& message)
 	check_valid_user(*client);
 }
 
-void send_welcome(Client *client)
+void Server::send_welcome(Client *client)
 {
 	(void)  client;
 	std::cout << PINK << "enviar mensajes de  ahberse  podido conectar. solo pasa una vez" << std::endl;
-	std::cout << "[001]" << std::endl;
-	std::cout << "[002]" << std::endl;
-	std::cout << "[003]" << std::endl;
-	std::cout << "[004]" << RESET << std::endl;
+	// std::cout << "[001] " << std::endl;
+	// std::cout << "[002]" << std::endl;
+	// std::cout << "[003]" << std::endl;
+	// std::cout << "[004]" << RESET << std::endl;
+
+	send_message(client->fd, RPL_WELCOME(client->nickname, client->get_realname()));
+	send_message(client->fd, RPL_YOURHOST(client->nickname, client->hostname, "1.0"));
+	send_message(client->fd, RPL_CREATED(client->nickname, get_time()));
+	send_message(client->fd, RPL_MYINFO(client->nickname));
 	//no  son prints, con enviar mensajes, pero lo que sea
 }
 

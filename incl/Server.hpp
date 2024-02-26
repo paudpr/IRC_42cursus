@@ -75,4 +75,6 @@ class Server {
 		std::vector<ptr>::iterator get_command(std::string& name);
 		
 
+
+		void send_welcome(Client*  client);
 };
