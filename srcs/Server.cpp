@@ -22,9 +22,9 @@ Server&		Server::operator=(const Server& other)
 		fds_poll = other.fds_poll;
 		commands = other.commands;
 		server_size = other.server_size;
-		conn_size = other.conn_size;
+		connection_size = other.connection_size;
 		server_addr = other.server_addr;
-		conn_addr = other.conn_addr;
+		connection_addr = other.connection_addr;
 		hostname = other.hostname;
 		server_fd = other.server_fd;
 		server_port = other.server_port;
@@ -54,7 +54,7 @@ void	Server::init()
 	server_addr.sin_family = PF_INET;
 	server_addr.sin_port = htons(server_port);
 	server_size = sizeof(server_addr);
-	conn_size = sizeof(conn_addr);
+	connection_size = sizeof(connection_addr);
 	hostname = get_hostname();
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -86,10 +86,11 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	int							fd_connection;
 	struct pollfd				poll_connection;
 
-	fd_connection = accept(fds_poll.begin()->fd, (sockaddr*)&conn_addr, &conn_size);
+	fd_connection = accept(fds_poll.begin()->fd, (sockaddr*)&connection_addr, &connection_size);
+	std::cout << ORANGE <<  iter->fd << "-" << fd_connection << RESET << std::endl;
+
 	if (fd_connection < 0)
-		throw std::runtime_error("[ ERROR ] Accept failed");
-	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
+		throw std::runtime_error("[ ERROR ] Accept failed");	// cambiar a mensaje de error?
 	if (clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
 	{
 		// send_msg( "Too many clients connected already"); // enviar mensaje al cliente de que no se puede conectar
@@ -98,16 +99,23 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	}
 
 	fcntl(fd_connection, F_SETFL, O_NONBLOCK);
+	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
 	fds_poll.push_back(poll_connection);
 	iter = fds_poll.begin();
 
-	Client	*client = new Client(fd_connection, conn_addr.sin_addr, this);
+	Client	*client = new Client(fd_connection, connection_addr.sin_addr, this);
+	std::cout << "\nfdclient-> " << client->fd  <<  RESET <<  std::endl;
 	client->is_online = true;
 	client->ping_request = true;
 	clients.push_back(client);
 
-	std::cout << CYAN << "Client: " << fd_connection << " from " << inet_ntoa(conn_addr.sin_addr)
-		<< ":" << ntohs(conn_addr.sin_port) << " connected." << RESET << std::endl;
+	const char* message = "PROBANDO CONEXION";
+	size_t read = send(fd_connection, message, strlen(message), 0);
+	if (read < 0)
+		std::cout << "CABRON" << std::endl;
+	
+	std::cout << CYAN << "Client: " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
+		<< ":" << ntohs(connection_addr.sin_port) << " connected." << RESET << std::endl;
 
 	// send_message(fd_connection, "Now connected to esteproyectoponlocomosea");
 }
@@ -115,17 +123,15 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 {
 	Client *client = *(get_client_byfd(iter->fd));
-	std::cout << YELLOW << client->fd << RESET <<  std::endl;
 	client->is_online = false;
 
 	//abandonar channels
 
 	std::cout << RED << "[Server]: Client " << iter->fd
-		<< " from " << inet_ntoa(conn_addr.sin_addr)
-		<< ":" << ntohs(conn_addr.sin_port)
+		<< " from " << inet_ntoa(connection_addr.sin_addr)
+		<< ":" << ntohs(connection_addr.sin_port)
 		<< " disconnected" << RESET << std::endl;
 
-	std::cout  <<ORANGE << clients.size() << RESET << std::endl;
 	int aux_fd = iter->fd;
 	fds_poll.erase(iter);
 	close(aux_fd);
@@ -135,7 +141,6 @@ void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 		clients.erase(it);
 	else 
 		std::cout << "There was a problem, client not found" << std::endl; 
-	std::cout  <<ORANGE << clients.size() << RESET << std::endl;
 	delete (client);
 }
 
@@ -184,8 +189,7 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 		{
-			// std::cout << "------->" << message.cmd << std::endl;
-			std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
+			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
 			if (message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
 				|| check_valid_user(*client))
 				(this->*(*cmd))((*client)->fd, message);
@@ -249,10 +253,7 @@ void	Server::start()
 				}
 			}
 			else if (iter->revents & POLLHUP)
-			{
-				std::cout <<  "222222222" <<  std::endl;
 				remove_client(iter);
-			}
 		}
 		// check_ping();
 	}
@@ -326,5 +327,5 @@ void Server::send_message(const int &fd, std::string message)
 		(*client)->send_leftovers = message.substr(read);
 	}
 	std::cout << LIGHT_CYAN << print_time() << "Sent to client [fd=" << fd << "] message:" << std::endl;
-	std::cout << "\t" << message << RESET << std::endl;
+	// std::cout << "\t" << message << RESET << std::endl;
 }

@@ -57,7 +57,7 @@ void Server::user(const int& fd, Message& message)
 	if ((*client)->username.empty() == false)
 		return send_message(fd, ERR_ALREADYREGISTERED((*client)->get_realname()));
 	(*client)->username = message.args[0];
-	(*client)->hostname = inet_ntoa(conn_addr.sin_addr);
+	(*client)->hostname = inet_ntoa(connection_addr.sin_addr);
 	if (message.args.size() >= 4)
 		(*client)->realname = join_split(message.args, 3);
 	if ((*client)->realname[0] == ':')
@@ -97,11 +97,11 @@ void Server::whois(const int& fd, Message& message)
 
 void Server::quit(const int& fd, Message& message)
 {
-	std::cout << "QUIE PASA" << std::endl;
+
+	//no está entrando aqui para 
 	std::string msg = join_split(message.args, 0);
 	msg = "QUIT: " + msg;
-	std::cout << "COSAS " <<  std::endl;
-	std::cout << YELLOW << msg << RESET << std::endl;
+	// std::cout << YELLOW << msg << RESET << std::endl;
 	send_message(fd, msg);
 
 	std::vector<pollfd>::iterator iter;
@@ -110,6 +110,7 @@ void Server::quit(const int& fd, Message& message)
 		if (iter->fd == fd)
 			break ;
 	}
+
 	remove_client(iter);
 	//abandonar channel y notificar a usuarios en el canal
 

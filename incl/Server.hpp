@@ -52,9 +52,9 @@ class Server {
 		int				server_port;
 		bool			online;
 		socklen_t		server_size;
-		socklen_t		conn_size;
+		socklen_t		connection_size;
 		sockaddr_in		server_addr;
-		sockaddr_in		conn_addr;
+		sockaddr_in		connection_addr;
 		std::string		hostname;
 		std::string		server_passwd;
 		std::string		time_init;
