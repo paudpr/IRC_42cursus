@@ -16,7 +16,7 @@ class Client {
 
 		Client &operator=(const Client &other);
 		bool operator==(const  Client &other);
-		
+
 		std::string get_next_command(void);
 		std::string get_realname();
 		Client& get_client_by_fd(int fd, std::map<int, Client> fds_clients);
@@ -35,6 +35,8 @@ class Client {
 		bool				is_online;
 		bool				ping_request;
 		std::string			ping_token;
+
+		int pass_tries; 	//quitar si versión de Server::pass sin comprobación de tries
 
 		std::string send_leftovers;
 		std::string receive_leftovers;

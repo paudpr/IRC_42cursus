@@ -10,6 +10,7 @@ Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_
 	ping_request = true;
 	time_init = std::time(NULL);
 	time_now = std::time(NULL);
+	pass_tries = 0;
 }
 
 Client::Client(const Client &other) : is_online(false) { *this = other; }

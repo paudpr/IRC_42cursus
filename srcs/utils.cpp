@@ -45,3 +45,11 @@ std::string get_time(void)
 	std::string str(buffer);
 	return str;
 }
+
+std::string int_to_string(int num)
+{
+	std::stringstream ss;
+	ss << num;
+	std::string str = ss.str();
+	return str;
+}

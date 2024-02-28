@@ -34,10 +34,12 @@ class Server {
 		void quit(const int& fd, Message& message);
 		void ping(const int& fd, Message& message);
 		void pong(const int& fd, Message& message);
+		void lusers(const int& fd, Message& message);
+		void motd(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
-		bool check_valid_user(Client *client);
+		bool check_valid_user(Client *client, Message& message);
 
 		//messaging
 		void send_message(const int& fd, std::string message);
@@ -76,5 +78,5 @@ class Server {
 		
 
 
-		void send_welcome(Client*  client);
+		void send_welcome(Client*  client, Message& message);
 };
