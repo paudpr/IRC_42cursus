@@ -189,7 +189,7 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
 			else
-				send_message((*client)->fd, get_time() + " :Not connected to server");
+				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server");
 		}
 	}
 }
@@ -306,12 +306,6 @@ void Server::save_commands()
 	commands.push_back(&Server::pong);
 	commands.push_back(&Server::lusers);
 	commands.push_back(&Server::motd);
-}
-
-std::string Server::print_time()
-{
-	std::string str = "print time ->";
-	return  str;
 }
 
 void Server::send_message(const int &fd, std::string message)

@@ -43,7 +43,6 @@ class Server {
 
 		//messaging
 		void send_message(const int& fd, std::string message);
-		std::string print_time();
 
 	private:
 		std::vector<ptr> commands;
