@@ -25,6 +25,8 @@
 # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
 // # define ERR_NONICKNAMEGIVEN "[431] ERR_NONICKNAMEGIVEN"
 
+# define RPL_CHANGENICK(oldNick, newNick) ":" + oldNick + " NICK " + newNick + IRC_ENDLINE
+
 # define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
 
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."

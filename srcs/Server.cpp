@@ -109,7 +109,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	std::cout << CYAN << "[Server]: Client " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
 		<< ":" << ntohs(connection_addr.sin_port) << " connected." << RESET << std::endl;
 
-	send_message(fd_connection, "Now connected to esteproyectoponlocomosea");
+	send_message(fd_connection, "Now connected to esteproyectoponlocomosea\r\n");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)

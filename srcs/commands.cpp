@@ -36,7 +36,7 @@ void Server::pass(const int& fd, Message& message)
 		client->pass_tries++;
 		if (client->pass_tries > 2)
 		{
-			send_message(fd, "[SERVER]: ERR_TOOMANYPASSTRIES");
+			send_message(fd, "[SERVER]: ERR_TOOMANYPASSTRIES\r\n");
 			std::vector<struct pollfd>::iterator iter;
 			for (iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
 			{
@@ -76,23 +76,23 @@ void Server::nick(const int& fd, Message& message)
 {
 	std::vector<Client*>::iterator client = get_client_byfd(fd);
 	if ((*client)->is_online == false)
-		return  send_message(fd, "CLIENT not connected to server, can't change nick");
+		return  send_message(fd, "CLIENT not connected to server, can't change nick\r\n");
 	if (message.args.empty())
 		return send_message(fd, ERR_NONICKNAMEGIVEN((*client)->get_realname()));
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
 		|| message.args[0].find(" ,*?!@.") != std::string::npos)
-		return send_message(fd, "ERROR nick erróneo");
+		return send_message(fd, "ERROR nick erróneo\r\n");
 	if (!check_availability(message.args[0], (*client)->nickname))
-		return send_message(fd, "ERROR nick ya en uso");
+		return send_message(fd, "ERROR nick ya en uso\r\n");
 
 	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
 
 	//change nickname in all channels with necessary messages
-	std::string msg  = ":" + prev + "!~" /*+ get_hostname() */+ " NICK " + (*client)->nickname; 
-	send_message(fd, msg);
+	std::string msg  = ":" + prev  + " NICK " + (*client)->nickname + "\r\n"; 
+	send_message(fd, RPL_CHANGENICK(prev, (*client)->nickname));
 	std::cout  << ORANGE << "\t comprobar en nick" << RESET << std::endl;
 	check_valid_user(*client, message);
 }
@@ -101,7 +101,7 @@ void Server::user(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
 	if (client->is_online == false)
-		return  send_message(fd, "CLIENT not connected to server, can't change user");
+		return  send_message(fd, "CLIENT not connected to server, can't change user\r\n");
 	if (message.args.size() < 4)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname()));
 	if (client->username.empty() == false)
@@ -208,7 +208,7 @@ void Server::ping(const int& fd, Message& message)
 {
 	// Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
-		return send_message(fd, "ERR_NEEDMOREPARAMS cosas cosas");
+		return send_message(fd, "ERR_NEEDMOREPARAMS cosas cosas\r\n");
 	std::string arg = join_split(message.args, 0);
 	send_message(fd, "PONG: " + arg);
 }
@@ -217,7 +217,7 @@ void Server::pong(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
-		return send_message(fd, "mensaje  de que  tiene que aber un token. ERR_NEEDMOREPARAMS");
+		return send_message(fd, "mensaje  de que  tiene que aber un token. ERR_NEEDMOREPARAMS\r\n");
 	if (client->ping_request == false)
 		return ;
 	if (message.args[0] == client->ping_token || message.args[0] == hostname)
@@ -227,7 +227,7 @@ void Server::pong(const int& fd, Message& message)
 	}
 	else
 	{
-		send_message(fd, "ERROR TOKEN  INVALIDO");
+		send_message(fd, "ERROR TOKEN  INVALIDO\r\n");
 		return ; //?¿?¿?¿?¿?¿?¿?¿? investigar  como salir de aqui;
 	}
 }
