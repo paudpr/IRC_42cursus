@@ -14,6 +14,6 @@ class Channel
 		Channel(const Channel& copy);
 		Channel& operator=(const Channel& other);
 		Channel(std::string topic);
-}
+};
 
 #endif

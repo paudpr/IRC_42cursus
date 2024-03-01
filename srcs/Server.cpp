@@ -185,11 +185,11 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 
 			std::cout << PINK << message.message << RESET << std::endl;
 			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
-			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
+			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" || message.cmd == "JOIN" 
 				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
 			else
-				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server");
+				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
 		}
 	}
 }
@@ -293,6 +293,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "PONG") return std::find(commands.begin(), commands.end(), &Server::pong);
 	if (name == "LUSERS") return std::find(commands.begin(), commands.end(), &Server::lusers);
 	if (name == "MOTD") return std::find(commands.begin(), commands.end(),  &Server::motd);
+	if (name == "JOIN") return std::find(commands.begin(), commands.end(),  &Server::join);
 	return (commands.end());
 }
 
@@ -306,6 +307,7 @@ void Server::save_commands()
 	commands.push_back(&Server::pong);
 	commands.push_back(&Server::lusers);
 	commands.push_back(&Server::motd);
+	commands.push_back(&Server::join);
 }
 
 void Server::send_message(const int &fd, std::string message)

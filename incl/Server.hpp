@@ -36,6 +36,7 @@ class Server {
 		void pong(const int& fd, Message& message);
 		void lusers(const int& fd, Message& message);
 		void motd(const int& fd, Message& message);
+		void join(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
