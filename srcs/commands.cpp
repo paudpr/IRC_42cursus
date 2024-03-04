@@ -27,9 +27,9 @@ void Server::pass(const int& fd, Message& message)
 	Client*  client = *(get_client_byfd(fd));
 
 	if (check_valid_user(client, message))
-		return send_message(fd, ERR_ALREADYREGISTERED(client->nickname));
+		return send_message(fd, ERR_ALREADYREGISTERED(message.cmd, client->nickname));
 	if (message.args.empty())
-		return send_message(fd, ERR_NEEDMOREPARAMS(client->nickname));
+		return send_message(fd, ERR_NEEDMOREPARAMS(message.cmd, client->nickname));
 	if (message.args[0] != server_passwd)
 	{
 		send_message(fd, ERR_PASSWDMISMATCH(client->nickname));
@@ -53,6 +53,8 @@ void Server::pass(const int& fd, Message& message)
 	std::cout << "[Server]: Client " << fd
 		<< " from address " << client->hostname 
 		<< " now has access to this IRC Server" << std::endl;
+
+	check_valid_user(client, message);
 
 }
 
@@ -93,7 +95,7 @@ void Server::nick(const int& fd, Message& message)
 	//change nickname in all channels with necessary messages
 	std::string msg  = ":" + prev  + " NICK " + (*client)->nickname + "\r\n"; 
 	send_message(fd, RPL_CHANGENICK(prev, (*client)->nickname));
-	std::cout  << ORANGE << "\t comprobar en nick" << RESET << std::endl;
+	// std::cout  << ORANGE << "\t comprobar en nick" << RESET << std::endl;
 	check_valid_user(*client, message);
 }
 
@@ -103,16 +105,16 @@ void Server::user(const int& fd, Message& message)
 	if (client->is_online == false)
 		return  send_message(fd, "CLIENT not connected to server, can't change user\r\n");
 	if (message.args.size() < 4)
-		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname()));
+		return send_message(fd, ERR_NEEDMOREPARAMS(message.cmd, client->nickname));
 	if (client->username.empty() == false)
-		return send_message(fd, ERR_ALREADYREGISTERED(client->get_realname()));
+		return send_message(fd, ERR_ALREADYREGISTERED(message.cmd, client->get_realname()));
 	client->username = message.args[0];
 	client->hostname = inet_ntoa(connection_addr.sin_addr);
 	if (message.args.size() >= 4)
 		client->realname = join_split(message.args, 3);
 	if (client->realname[0] == ':')
 		client->realname.erase(0, 1);
-	std::cout  << ORANGE << "\t comprobar en user" << RESET << std::endl;
+	// std::cout  << ORANGE << "\t comprobar en user" << RESET << std::endl;
 	std::cout << "-" << client->username << "-" << client->realname << "-" << client->hostname << "-" << std::endl;
 	check_valid_user(client, message);
 }
@@ -122,8 +124,9 @@ void Server::lusers(const int& fd, Message& message)
 	(void)fd;
 	(void)message;
 	Client *client = *(get_client_byfd(fd));
+	int num_opers = client->server->clients.size();
 	send_message(fd, RPL_LUSERCLIENT(client->nickname, int_to_string(client->server->clients.size())));
-	send_message(fd, RPL_LUSEROP(client->nickname, int_to_string(5)));	//arreglar numero cuando tenga operadores
+	send_message(fd, RPL_LUSEROP(client->nickname, int_to_string(num_opers)));	//arreglar numero cuando tenga operadores
 	// send_message(RPL_LUSERUNKNOWN(client->nickname));
 	// revisar resto de repplies de LUSERS 
 }
@@ -137,7 +140,7 @@ void Server::send_welcome(Client *client, Message &message)
 	// std::cout << "[003]" << std::endl;
 	// std::cout << "[004]" << RESET << std::endl;
 
-	send_message(client->fd, RPL_WELCOME(client->nickname, client->get_realname()));
+	send_message(client->fd, RPL_WELCOME(client->nickname));
 	send_message(client->fd, RPL_YOURHOST(client->nickname, client->hostname, "1.0"));
 	send_message(client->fd, RPL_CREATED(client->nickname, get_time()));
 	send_message(client->fd, RPL_MYINFO(client->nickname));
@@ -153,7 +156,7 @@ void Server::motd(const int& fd, Message& message)
 	(void)message;
 	Client *client = *(get_client_byfd(fd));
 	send_message(fd, RPL_MOTDSTART(client->nickname));
-	send_message(fd, RPL_MOTD);
+	send_message(fd, RPL_MOTD(client->nickname));
 	send_message(fd, RPL_ENDOFMOTD(client->nickname));
 }
 
@@ -206,9 +209,9 @@ void Server::quit(const int& fd, Message& message)
 
 void Server::ping(const int& fd, Message& message)
 {
-	// Client *client = *(get_client_byfd(fd));
+	Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
-		return send_message(fd, "ERR_NEEDMOREPARAMS cosas cosas\r\n");
+		return send_message(fd, ERR_NEEDMOREPARAMS(message.cmd, client->nickname));
 	std::string arg = join_split(message.args, 0);
 	send_message(fd, "PONG: " + arg);
 }
@@ -217,7 +220,7 @@ void Server::pong(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
-		return send_message(fd, "mensaje  de que  tiene que aber un token. ERR_NEEDMOREPARAMS\r\n");
+		return send_message(fd, ERR_NEEDMOREPARAMS(message.cmd, client->nickname));
 	if (client->ping_request == false)
 		return ;
 	if (message.args[0] == client->ping_token || message.args[0] == hostname)

@@ -160,7 +160,6 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
-	std::cout << GREEN << buffer << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
 	{
@@ -182,9 +181,6 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 		{
-
-			std::cout << PINK << message.message << RESET << std::endl;
-			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
 			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" || message.cmd == "JOIN" 
 				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
