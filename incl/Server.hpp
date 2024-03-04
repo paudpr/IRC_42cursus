@@ -12,6 +12,7 @@ class Message;
 class Server {
 	friend class Client;
 	friend class Message;
+	friend class Channel;
 
 	public:
 		typedef void (Server::*ptr)(const int&, Message&);
@@ -46,6 +47,7 @@ class Server {
 		void send_message(const int& fd, std::string message);
 
 	private:
+		std::vector<Channel *>	channels;
 		std::vector<ptr> commands;
 		std::vector<Client*> clients;
 		std::vector<pollfd> fds_poll;
@@ -79,4 +81,6 @@ class Server {
 
 
 		void send_welcome(Client*  client, Message& message);
+
+		bool find_channel(std::string name);
 };

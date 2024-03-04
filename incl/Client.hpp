@@ -42,4 +42,6 @@ class Client {
 		std::string receive_leftovers;
 		std::string	msg;
 		std::string buffer;
+
+		std::vector<Channel *>	channels;
 };

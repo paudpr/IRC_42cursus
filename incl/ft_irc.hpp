@@ -26,6 +26,7 @@
 # include "Message.hpp"
 # include "utils.hpp"
 # include "replies.hpp"
+# include "Channel.hpp"
 
 # define BACKLOG 5
 # define HOSTNAME_LEN 32

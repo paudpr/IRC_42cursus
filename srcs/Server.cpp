@@ -325,3 +325,12 @@ void Server::send_message(const int &fd, std::string message)
 	}
 	std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
+
+bool	Server::find_channel(std::string name)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+		if ((*it)->get_name() == name)
+			return (true);
+	return (false);
+}

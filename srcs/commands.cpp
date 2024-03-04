@@ -232,9 +232,9 @@ void Server::pong(const int& fd, Message& message)
 	}
 }
 
+// Buscar canal
+// Intentar entrar
 void	Server::join(const int& fd, Message& message)
 {
-	(void)fd;
-	(void)message;
-	std::cout << "Command JOIN" << std::endl;
+	
 }
