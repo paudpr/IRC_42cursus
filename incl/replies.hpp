@@ -1,7 +1,7 @@
 #pragma once
 
 # define ERR_NONICKNAMEGIVEN(client) ": [431] " + client + " :No nickname given" + IRC_ENDLINE
-# define ERR_NEEDMOREPARAMS(client) ": [461] " + client + " USER :Not enough parameters" + IRC_ENDLINE
+// # define ERR_NEEDMOREPARAMS(client) ": [461] " + client + " USER :Not enough parameters" + IRC_ENDLINE
 # define ERR_ALREADYREGISTERED(client) ": [462] " + client + " :You may not reregister" + IRC_ENDLINE
 # define ERR_PASSWDMISMATCH(client) ": [464] " + client + " :Password incorrect" + IRC_ENDLINE
 
@@ -30,3 +30,19 @@
 # define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
 
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."
+
+// Cannel replies //TODO: redefinir
+# define ERR_BADCHANNELKEY(client, channel) ":ft_irc 475 " + client + " " + channel + " :Cannot join channel (+k)" + IRC_ENDLINE
+# define ERR_INVITEONLYCHAN(client, channel) ":ft_irc 473 " + client + " " + channel + " :Cannot join channel (+i)" + IRC_ENDLINE
+# define ERR_NOSUCHCHANNEL(client, channel) ":ft_irc 403 " + client + " " + channel + " :No such channel" + IRC_ENDLINE
+# define ERR_TOOMANYCHANNELS(client, channel) ":ft_irc 405 " + client + " " + channel + " :You have joined too many channels" + IRC_ENDLINE
+# define ERR_BANNEDFROMCHAN(client, channel) ":ft_irc 474 " + client + " " + channel + " :Cannot join channel (+b)" + IRC_ENDLINE
+# define ERR_BADCHANMASK(client, channel) ":ft_irc 476 " + client + " " + channel + " :Bad Channel Mask" + IRC_ENDLINE
+# define ERR_NEEDMOREPARAMS(client, command) ":ft_irc 461 " + client + " " + command + " :Not enough parameters" + IRC_ENDLINE
+# define ERR_CHANNELISFULL(client, channel) ":ft_irc 471 " + client + " " + channel + " :Cannot join channel (+l)" + IRC_ENDLINE
+# define RPL_TOPIC(channel, topic) ":ft_irc 332 " + channel + " :" + topic + IRC_ENDLINE
+# define RPL_TOPICWHOTIME(channel, nick, time) ":ft_irc 333 " + channel + " " + nick + " " + time + IRC_ENDLINE
+# define RPL_NAMREPLY(channel, names) ":ft_irc 353 " + channel + " :" + names + IRC_ENDLINE
+# define RPL_ENDOFNAMES(channel) ":ft_irc 366 " + channel + " :End of /NAMES list" + IRC_ENDLINE
+
+# define RPL_JOIN(client, channel) ":" + client + " JOIN " + channel + IRC_ENDLINE

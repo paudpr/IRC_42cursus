@@ -29,7 +29,7 @@ void Server::pass(const int& fd, Message& message)
 	if (check_valid_user(client, message))
 		return send_message(fd, ERR_ALREADYREGISTERED(client->nickname));
 	if (message.args.empty())
-		return send_message(fd, ERR_NEEDMOREPARAMS(client->nickname));
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->nickname, "PASS"));
 	if (message.args[0] != server_passwd)
 	{
 		send_message(fd, ERR_PASSWDMISMATCH(client->nickname));
@@ -103,7 +103,7 @@ void Server::user(const int& fd, Message& message)
 	if (client->is_online == false)
 		return  send_message(fd, "CLIENT not connected to server, can't change user\r\n");
 	if (message.args.size() < 4)
-		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname()));
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "USER"));
 	if (client->username.empty() == false)
 		return send_message(fd, ERR_ALREADYREGISTERED(client->get_realname()));
 	client->username = message.args[0];
@@ -232,9 +232,19 @@ void Server::pong(const int& fd, Message& message)
 	}
 }
 
-// Buscar canal
-// Intentar entrar
-void	Server::join(const int& fd, Message& message)
+void	Server::join(const int& fd, Message& message) //TODO
 {
-	
+	Client *client = *(get_client_byfd(fd));
+	std::string channel_name = message.args[0];
+
+	if (channel_name[0] != '#')
+		channel_name = "#" + channel_name;
+
+	if (is_valid_channel_name(channel_name) == false)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "JOIN"));
+
+	if (find_channel(channel_name))
+		join_channel(channel_name, client, message);
+	else
+		create_channel(channel_name, client);
 }

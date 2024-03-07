@@ -326,11 +326,97 @@ void Server::send_message(const int &fd, std::string message)
 	std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
 
-bool	Server::find_channel(std::string name)
+bool	Server::find_channel(std::string name) //TODO
 {
 	std::vector<Channel *>::iterator it;
 	for (it = channels.begin(); it != channels.end(); ++it)
 		if ((*it)->get_name() == name)
 			return (true);
 	return (false);
+}
+
+std::vector<Channel*>::iterator Server::get_channel_by_name(std::string name)
+{
+	for (std::vector<Channel*>::iterator iter = channels.begin(); iter != channels.end(); iter++)
+	{
+		if ((*iter)->get_name() == name)
+			return iter;
+	}
+	return channels.end();
+}
+
+bool	Server::is_valid_channel_name(std::string name)
+{
+	if (name[0] != '#' || name.size() < 2)
+		return false;
+	for (size_t i = 1; i < name.size(); i++)
+	{
+		if (name[i] == ' ' || name[i] == ',' || name[i] == ':' || name[i] == '\r' || name[i] == '\n')
+			return false;
+	}
+	return true;
+}
+
+void	Server::create_channel(std::string name, Client *client)
+{
+	Channel *channel = new Channel(name, client->fd);
+	this->add_channel(channel);
+	client->join_channel(channel);
+	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
+}
+
+void	Server::join_channel(std::string name, Client *client, Message& message) //TODO
+{
+	Channel *channel = *(get_channel_by_name(name));
+
+	if (can_join_channel(client, channel, message.args) == false)
+		return ;
+	client->join_channel(channel);
+	channel->add_client(client);
+	send_message(client->fd, ":" + client->get_realname() + " JOIN " + name +"\r\n" );
+}
+
+bool	Server::can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args) //TODO
+{
+	if (channel->get_mode().k == true)
+	{
+		// if (args.size() < 2) //* NO SE SI ES NECESARIO
+		// {
+		// 	//! Enviar mensaje de error al cliente que no tiene la clave
+		// 	send_message(client->fd, ERR_NEEDMOREPARAMS(client->get_realname(), "JOIN"));
+		// }
+		if (args[1] != channel->get_password())
+		{
+			//! Enviar mensaje de error al cliente que no tiene la clave
+			send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
+		}
+		else
+			return (true);
+	}
+	else if (channel->get_mode().i == true)
+	{
+		if (client->is_invited_to(channel->get_name()) == false)
+		{
+			//! Enviar mensaje de error al cliente que no tiene invitación
+			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
+		}
+		else
+			return (true);
+	}
+	else if(channel->get_mode().l == true)
+	{
+		if (channel->get_max_clients() <= channel->get_current_clients())
+		{
+			//! Enviar mensaje de error al cliente que el canal está lleno
+			send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
+		}
+		else
+			return (true);
+	}
+	return (false);
+}
+
+void	Server::add_channel(Channel *channel)
+{
+	channels.push_back(channel);
 }

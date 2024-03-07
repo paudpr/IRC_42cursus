@@ -63,3 +63,29 @@ std::string Client::get_realname()
 	return realname;
 }
 
+bool	Client::is_in_channel(std::string name)
+{
+	std::vector<Channel*>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->get_name() == name)
+			return (true);
+	}
+	return (false);
+}
+
+bool	Client::is_invited_to(std::string channel_name)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channel_invitations.begin(); it != channel_invitations.end(); ++it)
+	{
+		if (*it == channel_name)
+			return (true);
+	}
+	return (false);
+}
+
+void	Client::join_channel(Channel *channel)
+{
+	channels.push_back(channel);
+}

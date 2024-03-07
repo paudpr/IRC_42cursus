@@ -4,9 +4,11 @@
 # include "ft_irc.hpp"
 # include "Client.hpp"
 # include "Message.hpp"
+# include "Channel.hpp"
 
 class Client;
 class Message;
+class Channel;
 
 
 class Server {
@@ -47,7 +49,7 @@ class Server {
 		void send_message(const int& fd, std::string message);
 
 	private:
-		std::vector<Channel *>	channels;
+		std::vector<Channel*>	channels;
 		std::vector<ptr> commands;
 		std::vector<Client*> clients;
 		std::vector<pollfd> fds_poll;
@@ -83,4 +85,13 @@ class Server {
 		void send_welcome(Client*  client, Message& message);
 
 		bool find_channel(std::string name);
+		std::vector<Channel*>::iterator	get_channel_by_name(std::string name);
+
+		//channel
+		void							create_channel(std::string name, Client *client);
+		void							join_channel(std::string name, Client *client, Message& message);
+		bool							can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args);
+		bool							is_valid_channel_name(std::string name);
+
+		void		add_channel(Channel *channel);
 };
