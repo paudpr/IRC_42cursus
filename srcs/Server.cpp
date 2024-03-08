@@ -297,6 +297,9 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "MOTD") return std::find(commands.begin(), commands.end(),  &Server::motd);
 	if (name == "JOIN") return std::find(commands.begin(), commands.end(),  &Server::join);
 	if (name == "MODE") return std::find(commands.begin(), commands.end(),  &Server::mode);
+	if (name == "PRIVMSG") return std::find(commands.begin(), commands.end(),  &Server::privmsg);
+	if (name == "PART") return std::find(commands.begin(), commands.end(),  &Server::part);
+	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
 	return (commands.end());
 }
 
@@ -312,6 +315,9 @@ void Server::save_commands()
 	commands.push_back(&Server::motd);
 	commands.push_back(&Server::join);
 	commands.push_back(&Server::mode);
+	commands.push_back(&Server::privmsg);
+	commands.push_back(&Server::part);
+	commands.push_back(&Server::topic);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -363,11 +369,11 @@ bool	Server::is_valid_channel_name(std::string name)
 
 void	Server::create_channel(std::string name, Client *client)
 {
-	Channel *channel = new Channel(name, client->fd);
+	Channel *channel = new Channel(name, client);
 	this->add_channel(channel);
 	client->join_channel(channel);
-	channel->add_client(client);
 	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
+	channel->broadcast_message(RPL_MODE(channel->get_name(), std::string("ft_irc"), "+to " + client->nickname));
 }
 
 void	Server::join_channel(std::string name, Client *client, Message& message) //TODO
@@ -379,8 +385,8 @@ void	Server::join_channel(std::string name, Client *client, Message& message) //
 	client->join_channel(channel);
 	channel->add_client(client);
 	std::cout << RPL_JOIN(client->get_realname(), name) << std::endl;
-	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
-	if (channel->get_topic() != "none")
+	channel->broadcast_message(RPL_JOIN(client->get_realname(), name));
+	if (channel->get_topic() != "")
 		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
 	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
 	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));

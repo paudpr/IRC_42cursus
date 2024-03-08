@@ -1,9 +1,9 @@
 #include "Channel.hpp"
 
 Channel::Channel() :
-	topic("none")
+	topic("")
 {
-	set_modes_false();
+	init_modes();
 }
 
 Channel::~Channel()
@@ -27,20 +27,21 @@ Channel& Channel::operator=(const Channel& other)
 	return *this;
 }
 
-Channel::Channel(std::string name, int op_fd) :
-	topic("none"), name(name), op_fd(op_fd), max_clients(0), current_clients(0), password("")
+Channel::Channel(std::string name, Client *client) :
+	topic(""), name(name), max_clients(0), current_clients(0), password("")
 {
-	set_modes_false();
-
+	init_modes();
+	this->add_operator(client);
+	add_client(client);
 }
 
-void	Channel::set_modes_false(void)
+void	Channel::init_modes(void)
 {
 	mode.i = false;
 	mode.k = false;
 	mode.l	= false;
-	mode.o = false;
-	mode.t = false;
+	mode.o = true;
+	mode.t = true;
 }
 
 std::string	Channel::handle_mode(std::vector<std::string> args)
@@ -117,13 +118,34 @@ void	Channel::broadcast_message(std::string message)
 		(*it)->send_message(message);
 }
 
+void Channel::send_message(Client *client, std::string message)
+{
+	std::vector<Client*>::iterator it;
+	for (it = clients.begin(); it != clients.end(); ++it)
+		if ((*it) != client)
+			(*it)->send_message(message);
+}
+
+void	Channel::remove_client(Client* client)
+{
+	std::vector<Client*>::iterator it;
+	for (it = clients.begin(); it != clients.end(); ++it)
+	{
+		if ((*it) == client)
+		{
+			clients.erase(it);
+			break;
+		}
+	}
+}
+
 std::string	Channel::get_list_of_clients(void)
 {
 	std::string list;
 	std::vector<Client*>::iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it)
 	{
-		if ((*it)->fd == op_fd)
+		if (is_operator(*it))
 			list += "@";
 		else
 			list += "+";
@@ -131,6 +153,36 @@ std::string	Channel::get_list_of_clients(void)
 		list += " ";
 	}
 	return (list);
+}
+
+// Add and remove operators
+void	Channel::add_operator(Client *client)
+{
+	operators_fds.push_back(client->fd);
+}
+
+void	Channel::remove_operator(Client *client)
+{
+	std::vector<int>::iterator it;
+	for (it = operators_fds.begin(); it != operators_fds.end(); ++it)
+	{
+		if ((*it) == client->fd)
+		{
+			operators_fds.erase(it);
+			break;
+		}
+	}
+}
+
+bool	Channel::is_operator(Client *client)
+{
+	std::vector<int>::iterator it;
+	for (it = operators_fds.begin(); it != operators_fds.end(); ++it)
+	{
+		if ((*it) == client->fd)
+			return (true);
+	}
+	return (false);
 }
 
 // Change modes	functions
@@ -157,9 +209,9 @@ void	Channel::change_mode_o(bool mode, Client *client)
 {
 	this->mode.o = mode;
 	if (mode == true)
-		this->op_fd = client->fd;
+		add_operator(client);
 	else
-		this->op_fd = 0;
+		remove_operator(client);
 }
 
 void	Channel::change_mode_l(bool mode, int limit)

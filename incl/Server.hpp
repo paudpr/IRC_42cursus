@@ -41,6 +41,9 @@ class Server {
 		void motd(const int& fd, Message& message);
 		void join(const int& fd, Message& message);
 		void mode(const int& fd, Message& message);
+		void privmsg(const int& fd, Message& message);
+		void part(const int& fd, Message& message);
+		void topic(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);

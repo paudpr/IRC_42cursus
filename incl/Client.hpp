@@ -23,6 +23,7 @@ class Client {
 		Client& get_client_by_fd(int fd, std::map<int, Client> fds_clients);
 		bool		is_in_channel(std::string name);
 		void		send_message(const std::string message);
+		void		leave_channel(Channel *channel);
 
 	private:
 		std::string				nickname;

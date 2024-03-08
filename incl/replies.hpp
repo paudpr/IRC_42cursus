@@ -32,23 +32,58 @@
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."
 
 // Cannel replies //TODO: redefinir
+// * Bad Channel Key
 # define ERR_BADCHANNELKEY(client, channel) ":ft_irc 475 " + client + " " + channel + " :Cannot join channel (+k)" + IRC_ENDLINE
+
+//* Invite only channel
 # define ERR_INVITEONLYCHAN(client, channel) ":ft_irc 473 " + client + " " + channel + " :Cannot join channel (+i)" + IRC_ENDLINE
+
+// * You're not on that channel
+# define ERR_NOTONCHANNEL(client, channel) ":ft_irc 442 " + client + " " + channel + " :You're not on that channel" + IRC_ENDLINE
+
+// * No such channel
 # define ERR_NOSUCHCHANNEL(client, channel) ":ft_irc 403 " + client + " " + channel + " :No such channel" + IRC_ENDLINE
+
+// * Too many channels
 # define ERR_TOOMANYCHANNELS(client, channel) ":ft_irc 405 " + client + " " + channel + " :You have joined too many channels" + IRC_ENDLINE
+
+// * Banned from channel
 # define ERR_BANNEDFROMCHAN(client, channel) ":ft_irc 474 " + client + " " + channel + " :Cannot join channel (+b)" + IRC_ENDLINE
+
+// * Bad Channel Mask
 # define ERR_BADCHANMASK(client, channel) ":ft_irc 476 " + client + " " + channel + " :Bad Channel Mask" + IRC_ENDLINE
+
+// * Need more parameters
 # define ERR_NEEDMOREPARAMS(client, command) ":ft_irc 461 " + client + " " + command + " :Not enough parameters" + IRC_ENDLINE
+
+// * Channel is full
 # define ERR_CHANNELISFULL(client, channel) ":ft_irc 471 " + client + " " + channel + " :Cannot join channel (+l)" + IRC_ENDLINE
+
+// * No topic is set
 # define RPL_TOPICWHOTIME(channel, nick, time) ":ft_irc 333 " + channel + " " + nick + " " + time + IRC_ENDLINE
+
+# define RPL_NAMREPLY(client, channel, names) ":ft_irc 353 " + client + " = " + channel + " :" + names + IRC_ENDLINE
+# define RPL_ENDOFNAMES(client, channel) ":ft_irc 366 " + channel + " :End of /NAMES list" + IRC_ENDLINE
+
+# define ERR_UNKNOWNMODE(client, modechar) ":ft_irc 472 " + client + " " + modechar + " :is unknown mode char to me" + IRC_ENDLINE
+# define ERR_CHANOPRIVSNEEDED(client, channel)":ft_irc 482 " + client + " " + channel + " :You're not channel operator" + IRC_ENDLINE
+
+
+
+
+// * COMMANDS
+//TOPIC
+# define RPL_TOPIC(client, channel, topic) ":ft_irc 332 " + client + " " + channel + " :" + topic + IRC_ENDLINE
+# define RPL_NOTICETOPIC(client, channel, topic) ":" + client + " TOPIC " + channel + " " + topic + IRC_ENDLINE
+
+// PRIVMSG
+# define RPL_PRIVMSG(client, target, message) ":" + client + " PRIVMSG " + target + " :" + message + IRC_ENDLINE
+
+// MODE
+# define RPL_MODE(channel, client, modes) ":" + client + " MODE " + channel + " " + modes + IRC_ENDLINE
 
 //JOIN
 # define RPL_JOIN(client, channel) ":" + client + " JOIN " + channel + IRC_ENDLINE
-# define RPL_TOPIC(client, channel, topic) ":ft_irc 332 " + client + " " + channel + " :" + topic + IRC_ENDLINE
-# define RPL_NAMREPLY(client, channel, names) ":ft_irc 353 " + client + " = " + channel + " :" + names + IRC_ENDLINE
-# define RPL_ENDOFNAMES(client, channel) ":ft_irc 366 " + channel + " :End of /NAMES list" + IRC_ENDLINE
-# define RPL_MODE(channel, client, modes) "PRIVMSG " + channel + " :" + client + " has changed mode: " + modes + IRC_ENDLINE
 
-// MODE
-# define ERR_UNKNOWNMODE(client, modechar) ":ft_irc 472 " + client + " " + modechar + " :is unknown mode char to me" + IRC_ENDLINE
-# define ERR_CHANOPRIVSNEEDED(client, channel)":ft_irc 482 " + client + " " + channel + " :You're not channel operator" + IRC_ENDLINE
+// PART
+# define RPL_PART(client, channel) ":" + client + " PART " + channel + IRC_ENDLINE

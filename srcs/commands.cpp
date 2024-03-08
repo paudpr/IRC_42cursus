@@ -232,6 +232,13 @@ void Server::pong(const int& fd, Message& message)
 	}
 }
 
+/*
+*	[JOIN]
+*		- Si el canal no existe, se crea.
+*		- Si el canal existe, se une.
+*		- Si el canal está bloqueado, se notifica.
+*/
+//TODO: Añadir unirse a más de un canal
 void	Server::join(const int& fd, Message& message) //TODO
 {
 	Client *client = *(get_client_byfd(fd));
@@ -249,6 +256,12 @@ void	Server::join(const int& fd, Message& message) //TODO
 		create_channel(channel_name, client);
 }
 
+/*
+*	[MODE]
+*		- Si el cliente no es operador, se notifica.
+*		- Si el modo no es válido, se notifica.
+*		- Si el modo es válido, se cambia y se notifica a los usuarios del canal.
+*/
 void	Server::mode(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -262,11 +275,96 @@ void	Server::mode(const int& fd, Message& message)
 		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), args[0]));
 
 	channel = *(get_channel_by_name(args[0]));
-	if (channel->get_op() != client->fd)
+	if (channel->is_operator(client) == false)
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
 	if (is_valid_mode(args[1], client) == false)
 		return;
 	modes_change = channel->handle_mode(args);
 	if (modes_change.length() > 2)
 		channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, modes_change));
+}
+
+/*
+*	[PRIVMSG]
+*		- Si el canal no existe, se notifica.
+*		- Si el canal existe, se envía el mensaje.
+*/
+//TODO: REPLIES
+void	Server::privmsg(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	Channel *channel = *(get_channel_by_name(message.args[0]));
+	if (channel == NULL)
+		return ;
+	std::string msg = join_split(message.args, 1);
+	if (msg.empty())
+		return;
+	if (msg[0] == ':')
+		msg.erase(0, 1);
+	channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
+}
+
+/*
+*	[PART]
+*		- Si faltan argumentos, se notifica.
+*		- Si el canal no existe, se notifica.
+*		- Si el cliente no está en el canal, se notifica.
+*		- Si el cliente está en el canal, se elimina.
+*/
+
+void	Server::part(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "PART"));
+
+	Channel *channel = *(get_channel_by_name(message.args[0]));
+	if (channel == NULL)
+		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), message.args[0]));
+
+	if (client->is_in_channel(channel->get_name()) == false)
+		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), message.args[0]));
+	client->leave_channel(channel);
+	channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name()));
+	channel->remove_client(client);
+	std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
+}
+
+/*
+*	[TOPIC]
+*		- Si falta el argumento, se notifica.
+*		- Si el canal no existe, se notifica.
+*		- Si el cliente no está en el canal, se notifica.
+*		- Si el cliente está en el canal, pero no es operador, se notifica.
+*		- Si no hay topic, se notifica.
+*/
+void	Server::topic(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+
+	if (message.args.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "TOPIC"));
+
+	Channel *channel = *(get_channel_by_name(message.args[0]));
+	if (channel == NULL)
+		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), message.args[0]));
+
+	if (message.args.size() < 2 || message.args[1] == ":")
+		return send_message(fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
+
+	std::string topic = join_split(message.args, 1);
+	if (topic.length() > 0 && topic[0] == ':')
+		topic.erase(0, 1);
+	if (client->is_in_channel(channel->get_name()) == false)
+		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), channel->get_name()));
+
+	if (channel->get_mode().t == false || channel->is_operator(client))
+	{
+		channel->set_topic(topic);
+		client->send_message(RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
+		channel->broadcast_message(RPL_NOTICETOPIC(client->get_realname(), channel->get_name(), topic));
+		return;
+	}
+	else
+		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel->get_name()));
 }

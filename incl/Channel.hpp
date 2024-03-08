@@ -28,12 +28,13 @@ class Channel
 		std::string				name;
 		t_channel_modes			mode;
 		int						op_fd;
+		std::vector<int>		operators_fds;
 
 		//Modes
 		int						max_clients;
 		int						current_clients;
 		std::string				password;
-		void					set_modes_false(void);
+		void					init_modes(void);
 		std::vector<Client*>	clients;	
 
 		//Mode
@@ -51,7 +52,7 @@ class Channel
 		~Channel();
 		Channel(const Channel& copy);
 		Channel& operator=(const Channel& other);
-		Channel(std::string name, int op_fd);
+		Channel(std::string name, Client *client);
 
 		// Setter
 		void			set_topic(const std::string topic);
@@ -80,5 +81,14 @@ class Channel
 
 		//Send message
 		void			broadcast_message(std::string message);
+		void			send_message(Client *client, std::string message);
+
+		//PART
+		void			remove_client(Client *client);
+
+		//Operators
+		void			add_operator(Client *client);
+		void			remove_operator(Client *client);
+		bool			is_operator(Client *client);
 };
 #endif

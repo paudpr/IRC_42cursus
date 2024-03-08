@@ -107,3 +107,16 @@ void	Client::send_message(std::string message)
 	}
 	std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
+
+void	Client::leave_channel(Channel *channel)
+{
+	std::vector<Channel*>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->get_name() == channel->get_name())
+		{
+			channels.erase(it);
+			return ;
+		}
+	}
+}
