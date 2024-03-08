@@ -319,7 +319,7 @@ void Server::save_commands()
 	commands.push_back(&Server::privmsg);
 	commands.push_back(&Server::part);
 	commands.push_back(&Server::topic);
-	commands.push_back(&Server::invite)
+	commands.push_back(&Server::invite);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -408,7 +408,10 @@ bool	Server::can_join_channel(Client *client, Channel *channel, std::vector<std:
 		if (client->is_invited_to(channel->get_name()) == false)
 			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
 		else
+		{
+			client->remove_invitation(channel->get_name());
 			return (true);
+		}
 	}
 	else if(channel->get_mode().l == true)
 	{
@@ -451,4 +454,24 @@ bool	Server::client_exists(std::string nickname)
 			return true;
 	}
 	return false;
+}
+
+Client *Server::get_client_by_nickname(std::string nickname)
+{
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->nickname == nickname)
+			return *iter;
+	}
+	return NULL;
+}
+
+void	Server::remove_channel(Channel *channel)
+{
+	std::vector<Channel*>::iterator it = std::find(channels.begin(), channels.end(), channel);
+	if (it != channels.end())
+		channels.erase(it);
+	else 
+		std::cout << "There was a problem, channel not found" << std::endl; 
+	delete (channel);
 }

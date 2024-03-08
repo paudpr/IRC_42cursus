@@ -74,6 +74,24 @@ bool	Client::is_in_channel(std::string name)
 	return (false);
 }
 
+void	Client::invited_to(std::string channel_name)
+{
+	channel_invitations.push_back(channel_name);
+}
+
+void	Client::remove_invitation(std::string channel_name)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channel_invitations.begin(); it != channel_invitations.end(); ++it)
+	{
+		if (*it == channel_name)
+		{
+			channel_invitations.erase(it);
+			return ;
+		}
+	}
+}
+
 bool	Client::is_invited_to(std::string channel_name)
 {
 	std::vector<std::string>::iterator it;

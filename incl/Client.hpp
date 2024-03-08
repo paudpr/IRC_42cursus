@@ -51,6 +51,8 @@ class Client {
 		std::vector<std::string>	channel_invitations;
 		// void						join_channel(Channel *channel);
 		// void						create_channel(std::string name, int fd);
+		void						invited_to(std::string channel_name);
+		void						remove_invitation(std::string channel_name);
 		bool						is_invited_to(std::string channel_name);
 		void						join_channel(Channel *channel);
 		bool						is_operator_in(std::string channel_name);

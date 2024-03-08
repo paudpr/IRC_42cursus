@@ -52,7 +52,8 @@ class Server {
 
 		//messaging
 		void send_message(const int& fd, std::string message);
-
+		//INVITE
+		Client*			get_client_by_nickname(std::string nickname);
 	private:
 		std::vector<Channel*>	channels;
 		std::vector<ptr> commands;
@@ -105,4 +106,7 @@ class Server {
 		//MODE
 		bool							is_valid_mode(std::string mode, Client *client);
 		void							change_mode(std::string mode, Client *client, Channel *channel);
+
+		//Channel
+		void							remove_channel(Channel *channel);
 };

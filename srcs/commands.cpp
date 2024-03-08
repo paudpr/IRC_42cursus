@@ -300,7 +300,7 @@ void	Server::mode(const int& fd, Message& message)
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
 //TODO: RPL_AWAY (301)
-
+//TODO: comprobar que el cliente esté en el canal
 void	Server::privmsg(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -339,8 +339,8 @@ void	Server::part(const int& fd, Message& message)
 	channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name()));
 	channel->remove_client(client);
 	channel->decrease_clients();
-	// if (channel->get_current_clients() == 0)
-	// 	remove_channel(channel);
+	if (channel->get_current_clients() == 0)
+		remove_channel(channel);
 	std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
 }
 
@@ -391,13 +391,6 @@ void	Server::topic(const int& fd, Message& message)
 *		- Si el cliente está en el canal, pero no es operador, y está bloqueado (+i), se notifica.
 *		- Si el usuario al que se quiere invitar ya está en el canal, se notifica.
 */
-//TODO: REPLIES Y comprobar que me tengo qeu ir
-//TODO: RPL_INVITING (341)
-//TODO: ERR_NEEDMOREPARAMS (461)
-//TODO: ERR_NOSUCHCHANNEL (403)
-//TODO: ERR_NOTONCHANNEL (442)
-//TODO: ERR_CHANOPRIVSNEEDED (482)
-//TODO: ERR_USERONCHANNEL (443)
 void	Server::invite(const int& fd, Message& message)
 {
 	std::string	channel_name;
@@ -426,5 +419,7 @@ void	Server::invite(const int& fd, Message& message)
 	if (invited != NULL)
 		return send_message(fd, ERR_USERONCHANNEL(client->get_realname(), nick, channel_name));
 
+	invited = get_client_by_nickname(nick);
+	invited->invited_to(channel_name);
 	invited->send_message(RPL_INVITING(client->get_realname(), invited->get_realname(), channel_name));
 }
