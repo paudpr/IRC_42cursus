@@ -33,33 +33,14 @@ std::string generate_token(void)
 	return token;
 }
 
-std::string get_time(void)
-{
-	std::time_t t = std::time(nullptr);
-
-    // Convertir el tiempo a una estructura de tiempo local
-    std::tm* tt_info = std::gmtime(&t);
-
-    // Crear un buffer para almacenar la hora formateada
-    char buffer[50];
-
-    // Formatear la fecha y hora en el formato deseado
-    std::strftime(buffer, sizeof(buffer), "@time=%Y-%m-%dT%H:%M:%S", tt_info);
-
-    // Obtener los milisegundos
-    std::clock_t milliseconds = std::clock() % CLOCKS_PER_SEC;
-
-    // Convertir los milisegundos a una cadena
-    std::ostringstream milliseconds_stream;
-    milliseconds_stream << std::setw(3) << std::setfill('0') << milliseconds;
-
-    // Concatenar los milisegundos al buffer
-    std::string result(buffer);
-    result += "." + milliseconds_stream.str() + "Z";
-
-    // Convertir a std::string y devolver
-    return result;
+std::string get_time() {
+    std::time_t now = std::time(nullptr);
+    std::tm* local_time = std::gmtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%a %b %d %Y at %H:%M:%S UTC", local_time);
+    return std::string(buffer);
 }
+
 
 std::string int_to_string(int num)
 {

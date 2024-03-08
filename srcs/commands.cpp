@@ -137,10 +137,10 @@ void Server::send_welcome(Client *client, Message &message)
 	// std::cout << "[003]" << std::endl;
 	// std::cout << "[004]" << RESET << std::endl;
 
-	send_message(client->fd, RPL_WELCOME(client->nickname, client->get_realname()));
+	send_message(client->fd, RPL_WELCOME(client->nickname, client->username, client->hostname));
 	send_message(client->fd, RPL_YOURHOST(client->nickname, client->hostname, "1.0"));
 	send_message(client->fd, RPL_CREATED(client->nickname, get_time()));
-	send_message(client->fd, RPL_MYINFO(client->nickname));
+	send_message(client->fd, RPL_MYINFO(client->username, "ft_irc", "1.0", "-", "itklo"));
 	send_message(client->fd, RPL_ISUPPORT(client->nickname));
 	Server::lusers(client->fd, message);
 	Server::motd(client->fd, message);
@@ -288,6 +288,7 @@ void	Server::mode(const int& fd, Message& message)
 
 /*
 *	[PRIVMSG]
+*	Envía un mensaje a un canal o a un usuario.
 *		- Si el canal no existe, se notifica.
 *		- Si el canal existe, se envía el mensaje.
 */
@@ -317,12 +318,12 @@ void	Server::privmsg(const int& fd, Message& message)
 
 /*
 *	[PART]
+*	Abandona el canal, si no queda nadie, se elimina.
 *		- Si faltan argumentos, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
 *		- Si el cliente está en el canal, se elimina.
 */
-//TODO: Eliminar canal si no hay usuarios
 void	Server::part(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -346,6 +347,7 @@ void	Server::part(const int& fd, Message& message)
 
 /*
 *	[TOPIC]
+*	Añade o modifica el topic del canal.
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -385,6 +387,7 @@ void	Server::topic(const int& fd, Message& message)
 
 /*
 *	[INVITE]
+*	Invitar a un usuario a un canal.
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -422,4 +425,20 @@ void	Server::invite(const int& fd, Message& message)
 	invited = get_client_by_nickname(nick);
 	invited->invited_to(channel_name);
 	invited->send_message(RPL_INVITING(client->get_realname(), invited->get_realname(), channel_name));
+}
+
+/*
+*	[KICK]
+*	Echar a un usuario del canal.
+*		- Si falta el argumento, se notifica.
+*		- Si el canal no existe, se notifica.
+*		- Si no es operador, se notifica.
+*		- Si el usuario no está en el canal, se notifica.
+*		- Si el usa el comando no esta en el canal, se notifica.
+*/
+void	Server::kick(const int& fd, Message& message)
+{
+	(void)fd;
+	(void)message;
+	std::cout << "Command KICK" << std::endl;
 }

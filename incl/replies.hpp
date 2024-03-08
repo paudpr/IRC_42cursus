@@ -1,16 +1,18 @@
 #pragma once
 
-# define ERR_NONICKNAMEGIVEN(client) ": [431] " + client + " :No nickname given" + IRC_ENDLINE
-// # define ERR_NEEDMOREPARAMS(client) ": [461] " + client + " USER :Not enough parameters" + IRC_ENDLINE
-# define ERR_ALREADYREGISTERED(client) ": [462] " + client + " :You may not reregister" + IRC_ENDLINE
-# define ERR_PASSWDMISMATCH(client) ": [464] " + client + " :Password incorrect" + IRC_ENDLINE
+// * Returned when a nickname parameter is expected for a command but isn’t given.
+# define ERR_NONICKNAMEGIVEN(client) ":ft_irc 431 " + client + " :No nickname given" + IRC_ENDLINE
 
 
-# define RPL_WELCOME(client, fullname) "[001] " + client + ":Welcome to the FT_IRC Network " + fullname + IRC_ENDLINE
-# define RPL_YOURHOST(client, servername, version) "[002] " + client + ":Your host is " + servername + ", running version " + version + IRC_ENDLINE
-# define RPL_CREATED(client, datetime)  "[003] "  + client + ":This server was created " + datetime + IRC_ENDLINE
-# define RPL_MYINFO(client) "[004] " + client + ": reply my info con  toda la  mierda necesaria"
-# define RPL_ISUPPORT(client) "[005] " + client + ": <1-13> tokens are supported by this server" + IRC_ENDLINE
+# define ERR_ALREADYREGISTERED(client) ":ft_irc 462 " + client + " :You may not reregister" + IRC_ENDLINE
+# define ERR_PASSWDMISMATCH(client) ":ft_irc 464 " + client + " :Password incorrect" + IRC_ENDLINE
+
+
+# define RPL_WELCOME(nick, username, hostname) ":ft_irc 001 " + nick + " :Welcome to the ft_irc Internet Relay Chat Network, " + nick + "[!" + username + "@" + hostname + "]" IRC_ENDLINE
+# define RPL_YOURHOST(client, servername, version) ":ft_irc 002 " + client + " :Your host is " + servername + ", running version " + version + IRC_ENDLINE
+# define RPL_CREATED(client, datetime)  ":ft_irc 003 " + client + " :This server was created " + datetime + IRC_ENDLINE
+# define RPL_MYINFO(client, servername, version, availableUserModes, availableChannelModes) ":ft_irc 004 " + client + " " + servername + " " + version + " " + availableUserModes + " " + availableChannelModes + IRC_ENDLINE
+# define RPL_ISUPPORT(client) ":ft_irc 005 " + client +  " CHARSET=ascii CHANTYPES=# PREFIX=(o)@ NAMESX=NO :are supported by this server" + IRC_ENDLINE
 
 # define RPL_LUSERCLIENT(client, num) "[251] " + client + ":There are " + num + " users in this server" + IRC_ENDLINE
 # define RPL_LUSEROP(client, num ) "[252] "  + client + " "  + num + " :operator(s) online" + IRC_ENDLINE
@@ -23,7 +25,6 @@
 //redefinir, que coño  que aburrido
 # define ERR_NOSUCHNICK(client, nick) ":ft_irc 401 " + client + " " + nick + " :No such nick/channel" + IRC_ENDLINE
 # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
-// # define ERR_NONICKNAMEGIVEN "[431] ERR_NONICKNAMEGIVEN"
 
 # define RPL_CHANGENICK(oldNick, newNick) ":" + oldNick + " NICK " + newNick + IRC_ENDLINE
 
@@ -71,7 +72,7 @@
 
 // * User on channel
 # define ERR_USERONCHANNEL(client, nick, channel) ":ft_irc 443 " + client + " " + nick + " " + channel + " :is already on channel" + IRC_ENDLINE
-
+# define ERR_USERNOTINCHANNEL(client, nick, channel) ":ft_irc 441 " + client + " " + nick + " " + channel + " :They aren't on that channel" + IRC_ENDLINE
 
 // * COMMANDS
 

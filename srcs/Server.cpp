@@ -186,12 +186,12 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 			std::cout << PINK << message.message << RESET << std::endl;
 			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
 			//!BYPASS
+				// (this->*(*cmd))((*client)->fd, message);
+			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
+				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
-			// if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
-			// 	|| check_valid_user(*client, message))
-			// 	(this->*(*cmd))((*client)->fd, message);
-			// else
-			// 	send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
+			else
+				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
 		}
 	}
 }
@@ -301,6 +301,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "PART") return std::find(commands.begin(), commands.end(),  &Server::part);
 	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
 	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
+	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
 	return (commands.end());
 }
 
@@ -320,6 +321,7 @@ void Server::save_commands()
 	commands.push_back(&Server::part);
 	commands.push_back(&Server::topic);
 	commands.push_back(&Server::invite);
+	commands.push_back(&Server::kick);
 }
 
 void Server::send_message(const int &fd, std::string message)
