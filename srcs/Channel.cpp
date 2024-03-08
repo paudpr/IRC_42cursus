@@ -137,6 +137,15 @@ void	Channel::remove_client(Client* client)
 			break;
 		}
 	}
+	std::vector<int>::iterator fds;
+	for (fds = operators_fds.begin(); fds != operators_fds.end(); ++fds)
+	{
+		if ((*fds) == client->fd)
+		{
+			operators_fds.erase(fds);
+			break;
+		}
+	}
 }
 
 std::string	Channel::get_list_of_clients(void)
@@ -183,6 +192,18 @@ bool	Channel::is_operator(Client *client)
 			return (true);
 	}
 	return (false);
+}
+
+void	Channel::increase_clients(void)
+{
+	current_clients++;
+}
+
+void	Channel::decrease_clients(void)
+{
+	current_clients--;
+	if (current_clients < 0)
+		current_clients = 0;
 }
 
 // Change modes	functions

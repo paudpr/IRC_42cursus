@@ -44,6 +44,7 @@ class Server {
 		void privmsg(const int& fd, Message& message);
 		void part(const int& fd, Message& message);
 		void topic(const int& fd, Message& message);
+		void invite(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -98,6 +99,8 @@ class Server {
 		bool							is_valid_channel_name(std::string name);
 
 		void							add_channel(Channel *channel);
+
+		bool							client_exists(std::string nick);
 		
 		//MODE
 		bool							is_valid_mode(std::string mode, Client *client);

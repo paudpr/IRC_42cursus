@@ -300,6 +300,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "PRIVMSG") return std::find(commands.begin(), commands.end(),  &Server::privmsg);
 	if (name == "PART") return std::find(commands.begin(), commands.end(),  &Server::part);
 	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
+	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
 	return (commands.end());
 }
 
@@ -318,6 +319,7 @@ void Server::save_commands()
 	commands.push_back(&Server::privmsg);
 	commands.push_back(&Server::part);
 	commands.push_back(&Server::topic);
+	commands.push_back(&Server::invite)
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -386,7 +388,7 @@ void	Server::join_channel(std::string name, Client *client, Message& message) //
 	channel->add_client(client);
 	std::cout << RPL_JOIN(client->get_realname(), name) << std::endl;
 	channel->broadcast_message(RPL_JOIN(client->get_realname(), name));
-	if (channel->get_topic() != "")
+	if (channel->get_topic().empty())
 		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
 	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
 	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
@@ -439,4 +441,14 @@ bool	Server::is_valid_mode(std::string mode, Client *client)
 			return false;
 		}
 	return true;
+}
+
+bool	Server::client_exists(std::string nickname)
+{
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->nickname == nickname)
+			return true;
+	}
+	return false;
 }

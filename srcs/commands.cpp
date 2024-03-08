@@ -254,6 +254,8 @@ void	Server::join(const int& fd, Message& message) //TODO
 		join_channel(channel_name, client, message);
 	else
 		create_channel(channel_name, client);
+	Channel *channel = *(get_channel_by_name(channel_name));
+	channel->increase_clients();
 }
 
 /*
@@ -289,7 +291,16 @@ void	Server::mode(const int& fd, Message& message)
 *		- Si el canal no existe, se notifica.
 *		- Si el canal existe, se envía el mensaje.
 */
-//TODO: REPLIES
+//TODO: ERR_NOSUCHNICK (401)
+//TODO: ERR_NOSUCHSERVER (402)
+//TODO: ERR_CANNOTSENDTOCHAN (404)
+//TODO: ERR_TOOMANYTARGETS (407)
+//TODO: ERR_NORECIPIENT (411)
+//TODO: ERR_NOTEXTTOSEND (412)
+//TODO: ERR_NOTOPLEVEL (413)
+//TODO: ERR_WILDTOPLEVEL (414)
+//TODO: RPL_AWAY (301)
+
 void	Server::privmsg(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -311,7 +322,7 @@ void	Server::privmsg(const int& fd, Message& message)
 *		- Si el cliente no está en el canal, se notifica.
 *		- Si el cliente está en el canal, se elimina.
 */
-
+//TODO: Eliminar canal si no hay usuarios
 void	Server::part(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -327,6 +338,9 @@ void	Server::part(const int& fd, Message& message)
 	client->leave_channel(channel);
 	channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name()));
 	channel->remove_client(client);
+	channel->decrease_clients();
+	// if (channel->get_current_clients() == 0)
+	// 	remove_channel(channel);
 	std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
 }
 
@@ -367,4 +381,50 @@ void	Server::topic(const int& fd, Message& message)
 	}
 	else
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel->get_name()));
+}
+
+/*
+*	[INVITE]
+*		- Si falta el argumento, se notifica.
+*		- Si el canal no existe, se notifica.
+*		- Si el cliente no está en el canal, se notifica.
+*		- Si el cliente está en el canal, pero no es operador, y está bloqueado (+i), se notifica.
+*		- Si el usuario al que se quiere invitar ya está en el canal, se notifica.
+*/
+//TODO: REPLIES Y comprobar que me tengo qeu ir
+//TODO: RPL_INVITING (341)
+//TODO: ERR_NEEDMOREPARAMS (461)
+//TODO: ERR_NOSUCHCHANNEL (403)
+//TODO: ERR_NOTONCHANNEL (442)
+//TODO: ERR_CHANOPRIVSNEEDED (482)
+//TODO: ERR_USERONCHANNEL (443)
+void	Server::invite(const int& fd, Message& message)
+{
+	std::string	channel_name;
+	std::string	nick;
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 2)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "INVITE"));
+
+	nick = message.args[0];
+	channel_name = message.args[1];
+
+	if (client_exists(nick) == false)
+		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), nick));
+	
+	Channel *channel = *(get_channel_by_name(channel_name));
+	if (channel == NULL)
+		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), channel_name));
+
+	if (client->is_in_channel(channel_name) == false)
+		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), channel_name));
+
+	if (channel->get_mode().i == true && channel->is_operator(client) == false)
+		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel_name));
+
+	Client *invited = channel->find_client_by_nick(nick);
+	if (invited != NULL)
+		return send_message(fd, ERR_USERONCHANNEL(client->get_realname(), nick, channel_name));
+
+	invited->send_message(RPL_INVITING(client->get_realname(), invited->get_realname(), channel_name));
 }

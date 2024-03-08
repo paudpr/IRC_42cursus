@@ -35,7 +35,7 @@ class Channel
 		int						current_clients;
 		std::string				password;
 		void					init_modes(void);
-		std::vector<Client*>	clients;	
+		std::vector<Client*>	clients;
 
 		//Mode
 
@@ -45,8 +45,6 @@ class Channel
 		void					change_mode_o(bool mode, Client *client);
 		void					change_mode_l(bool mode, int limit);
 
-		//Channel
-		Client*					find_client_by_nick(std::string nick);
 	public:
 		Channel();
 		~Channel();
@@ -72,7 +70,8 @@ class Channel
 		int				get_current_clients(void) const;
 		std::string		get_password(void) const;
 
-		//channel
+		//Channel
+		Client*			find_client_by_nick(std::string nick);
 		void			add_client(Client* client);
 		std::string		handle_mode(std::vector<std::string> args);
 
@@ -90,5 +89,9 @@ class Channel
 		void			add_operator(Client *client);
 		void			remove_operator(Client *client);
 		bool			is_operator(Client *client);
+
+		//Users
+		void			increase_clients(void);
+		void			decrease_clients(void);
 };
 #endif

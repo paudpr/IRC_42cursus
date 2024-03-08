@@ -21,7 +21,7 @@
 # define RPL_ENDOFMOTD(client) "[376] " + client + " :End of /MOTD command" + IRC_ENDLINE
 
 //redefinir, que coño  que aburrido
-# define ERR_NOSUCHNICK "[401] ERR_NOSUCHNICK"
+# define ERR_NOSUCHNICK(client, nick) ":ft_irc 401 " + client + " " + nick + " :No such nick/channel" + IRC_ENDLINE
 # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
 // # define ERR_NONICKNAMEGIVEN "[431] ERR_NONICKNAMEGIVEN"
 
@@ -69,10 +69,16 @@
 # define ERR_CHANOPRIVSNEEDED(client, channel)":ft_irc 482 " + client + " " + channel + " :You're not channel operator" + IRC_ENDLINE
 
 
+// * User on channel
+# define ERR_USERONCHANNEL(client, nick, channel) ":ft_irc 443 " + client + " " + nick + " " + channel + " :is already on channel" + IRC_ENDLINE
 
 
 // * COMMANDS
-//TOPIC
+
+// INVITE
+# define RPL_INVITING(client, nick, channel) ":ft_irc 341 " + client + " " + nick + " " + channel + IRC_ENDLINE
+
+// TOPIC
 # define RPL_TOPIC(client, channel, topic) ":ft_irc 332 " + client + " " + channel + " :" + topic + IRC_ENDLINE
 # define RPL_NOTICETOPIC(client, channel, topic) ":" + client + " TOPIC " + channel + " " + topic + IRC_ENDLINE
 
