@@ -185,11 +185,13 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 
 			std::cout << PINK << message.message << RESET << std::endl;
 			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
-			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" || message.cmd == "JOIN" 
-				|| check_valid_user(*client, message))
+			//!BYPASS
 				(this->*(*cmd))((*client)->fd, message);
-			else
-				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
+			// if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
+			// 	|| check_valid_user(*client, message))
+			// 	(this->*(*cmd))((*client)->fd, message);
+			// else
+			// 	send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
 		}
 	}
 }
@@ -294,6 +296,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "LUSERS") return std::find(commands.begin(), commands.end(), &Server::lusers);
 	if (name == "MOTD") return std::find(commands.begin(), commands.end(),  &Server::motd);
 	if (name == "JOIN") return std::find(commands.begin(), commands.end(),  &Server::join);
+	if (name == "MODE") return std::find(commands.begin(), commands.end(),  &Server::mode);
 	return (commands.end());
 }
 
@@ -308,6 +311,7 @@ void Server::save_commands()
 	commands.push_back(&Server::lusers);
 	commands.push_back(&Server::motd);
 	commands.push_back(&Server::join);
+	commands.push_back(&Server::mode);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -362,6 +366,7 @@ void	Server::create_channel(std::string name, Client *client)
 	Channel *channel = new Channel(name, client->fd);
 	this->add_channel(channel);
 	client->join_channel(channel);
+	channel->add_client(client);
 	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
 }
 
@@ -373,50 +378,59 @@ void	Server::join_channel(std::string name, Client *client, Message& message) //
 		return ;
 	client->join_channel(channel);
 	channel->add_client(client);
-	send_message(client->fd, ":" + client->get_realname() + " JOIN " + name +"\r\n" );
+	std::cout << RPL_JOIN(client->get_realname(), name) << std::endl;
+	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
+	if (channel->get_topic() != "none")
+		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
+	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
+	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
 }
 
 bool	Server::can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args) //TODO
 {
 	if (channel->get_mode().k == true)
 	{
-		// if (args.size() < 2) //* NO SE SI ES NECESARIO
-		// {
-		// 	//! Enviar mensaje de error al cliente que no tiene la clave
-		// 	send_message(client->fd, ERR_NEEDMOREPARAMS(client->get_realname(), "JOIN"));
-		// }
 		if (args[1] != channel->get_password())
-		{
-			//! Enviar mensaje de error al cliente que no tiene la clave
 			send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
-		}
 		else
 			return (true);
 	}
 	else if (channel->get_mode().i == true)
 	{
 		if (client->is_invited_to(channel->get_name()) == false)
-		{
-			//! Enviar mensaje de error al cliente que no tiene invitación
 			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
-		}
 		else
 			return (true);
 	}
 	else if(channel->get_mode().l == true)
 	{
 		if (channel->get_max_clients() <= channel->get_current_clients())
-		{
-			//! Enviar mensaje de error al cliente que el canal está lleno
 			send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
-		}
 		else
 			return (true);
 	}
+	else
+		return (true);
 	return (false);
 }
 
 void	Server::add_channel(Channel *channel)
 {
 	channels.push_back(channel);
+}
+
+bool	Server::is_valid_mode(std::string mode, Client *client)
+{
+	std::string flags_op;
+
+	if (mode[0] != '+' && mode[0] != '-')
+		return false;
+	flags_op = mode.substr(1);
+	for(size_t i = 0; i < flags_op.size(); i++)
+		if (flags_op[i] != 'i' && flags_op[i] != 't' && flags_op[i] != 'k' && flags_op[i] != 'o' && flags_op[i] != 'l')
+		{
+			send_message(client->fd, ERR_UNKNOWNMODE(client->get_realname(), flags_op[i]));
+			return false;
+		}
+	return true;
 }

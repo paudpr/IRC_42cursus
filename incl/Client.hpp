@@ -22,6 +22,7 @@ class Client {
 		std::string get_realname();
 		Client& get_client_by_fd(int fd, std::map<int, Client> fds_clients);
 		bool		is_in_channel(std::string name);
+		void		send_message(const std::string message);
 
 	private:
 		std::string				nickname;
@@ -51,4 +52,5 @@ class Client {
 		// void						create_channel(std::string name, int fd);
 		bool						is_invited_to(std::string channel_name);
 		void						join_channel(Channel *channel);
+		bool						is_operator_in(std::string channel_name);
 };

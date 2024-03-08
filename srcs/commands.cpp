@@ -248,3 +248,25 @@ void	Server::join(const int& fd, Message& message) //TODO
 	else
 		create_channel(channel_name, client);
 }
+
+void	Server::mode(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	Channel *channel;
+	std::vector<std::string> args = message.args;
+	std::string modes_change;
+
+	if (args.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "MODE"));
+	if (find_channel(args[0]) == false)
+		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), args[0]));
+
+	channel = *(get_channel_by_name(args[0]));
+	if (channel->get_op() != client->fd)
+		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
+	if (is_valid_mode(args[1], client) == false)
+		return;
+	modes_change = channel->handle_mode(args);
+	if (modes_change.length() > 2)
+		channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, modes_change));
+}

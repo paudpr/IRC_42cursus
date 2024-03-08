@@ -89,3 +89,21 @@ void	Client::join_channel(Channel *channel)
 {
 	channels.push_back(channel);
 }
+
+void	Client::send_message(std::string message)
+{
+	int	fd = this->fd;
+	int total = 0;
+	int	bytesleft = message.size();
+	int	byteswritten;
+
+	while (total < (int)message.size())
+	{
+		byteswritten = send(fd, message.c_str() + total, bytesleft, 0);
+		if (byteswritten == -1)
+			break;
+		total += byteswritten;
+		bytesleft -= byteswritten;
+	}
+	std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+}

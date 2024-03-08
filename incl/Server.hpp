@@ -40,6 +40,7 @@ class Server {
 		void lusers(const int& fd, Message& message);
 		void motd(const int& fd, Message& message);
 		void join(const int& fd, Message& message);
+		void mode(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -93,5 +94,9 @@ class Server {
 		bool							can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args);
 		bool							is_valid_channel_name(std::string name);
 
-		void		add_channel(Channel *channel);
+		void							add_channel(Channel *channel);
+		
+		//MODE
+		bool							is_valid_mode(std::string mode, Client *client);
+		void							change_mode(std::string mode, Client *client, Channel *channel);
 };
