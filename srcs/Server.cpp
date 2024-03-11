@@ -102,14 +102,14 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	iter = fds_poll.begin();
 
 	Client	*client = new Client(fd_connection, connection_addr.sin_addr, this);
-	client->is_online = true;
+	// client->is_online = true;
 	client->ping_request = true;
 	clients.push_back(client);
 	
 	std::cout << CYAN << "[Server]: Client " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
 		<< ":" << ntohs(connection_addr.sin_port) << " connected." << RESET << std::endl;
 
-	send_message(fd_connection, "Now connected to esteproyectoponlocomosea\r\n");
+	// send_message(fd_connection, "Now connected to esteproyectoponlocomosea\r\n");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
@@ -160,11 +160,12 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
-	std::cout << GREEN << buffer << std::endl;
+	// std::cout << YELLOW << buffer << RESET << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
 	{
 		// cambiar a ejecutar comando QUIT ?????
+		// std::cout << "ESTOY AQUI" << std::endl;
 		remove_client(iter);
 		return ;
 	}
@@ -182,7 +183,6 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 		{
-
 			std::cout << PINK << message.message << RESET << std::endl;
 			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
 			//!BYPASS
@@ -190,8 +190,8 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
 				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
-			else
-				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
+			// else
+			// 	send_message((*client)->fd, RPL_NONE(message.cmd, "Not connected to server"));
 		}
 	}
 }

@@ -3,10 +3,14 @@
 // * Returned when a nickname parameter is expected for a command but isn’t given.
 # define ERR_NONICKNAMEGIVEN(client) ":ft_irc 431 " + client + " :No nickname given" + IRC_ENDLINE
 
+# define RPL_WELCOME(client) "001 " + client + " :Welcome to ft_IRC Network!" + IRC_ENDLINE
+# define RPL_YOURHOST(client, servername, version) "002 " + client + " :Your host is " + servername + ", running version " + version + "" + IRC_ENDLINE
+# define RPL_CREATED(client, date) "003 " + client + " :This server was created " + date + "" + IRC_ENDLINE
+# define RPL_MYINFO(client) "004 " + client + " :Reply my info con  toda la  mierda necesaria" + IRC_ENDLINE
+# define RPL_ISUPPORT(client) "005 " + client + " :MOTD File is: motd" + IRC_ENDLINE
 
 # define ERR_ALREADYREGISTERED(client) ":ft_irc 462 " + client + " :You may not reregister" + IRC_ENDLINE
 # define ERR_PASSWDMISMATCH(client) ":ft_irc 464 " + client + " :Password incorrect" + IRC_ENDLINE
-
 
 # define RPL_WELCOME(nick, username, hostname) ":ft_irc 001 " + nick + " :Welcome to the ft_irc Internet Relay Chat Network, " + nick + "[!" + username + "@" + hostname + "]" IRC_ENDLINE
 # define RPL_YOURHOST(client, servername, version) ":ft_irc 002 " + client + " :Your host is " + servername + ", running version " + version + IRC_ENDLINE
@@ -27,13 +31,14 @@
 # define RPL_MOTD "[372] :<line  of the motd"
 # define RPL_ENDOFMOTD(client) "[376] " + client + " :End of /MOTD command" + IRC_ENDLINE
 
-//redefinir, que coño  que aburrido
 # define ERR_NOSUCHNICK(client, nick) ":ft_irc 401 " + client + " " + nick + " :No such nick/channel" + IRC_ENDLINE
 # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
 
 # define RPL_CHANGENICK(oldNick, newNick) ":" + oldNick + " NICK " + newNick + IRC_ENDLINE
 
-# define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
+# define RPL_ENDOFWHOIS "318 RPL_ENDOFWHOIS"
+
+# define RPL_NONE(command, message) "300 " + command + " :"  + message + IRC_ENDLINE
 
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."
 
