@@ -1,6 +1,7 @@
 #pragma once
 
 # include <iostream>
+# include <iomanip>
 # include <unistd.h>
 # include <poll.h>
 # include <errno.h>
@@ -26,6 +27,7 @@
 # include "Message.hpp"
 # include "utils.hpp"
 # include "replies.hpp"
+# include "Channel.hpp"
 
 # define BACKLOG 5
 # define HOSTNAME_LEN 32
@@ -54,19 +56,3 @@
 # define LIGHT_GREEN "\033[92m"
 # define LIGHT_BLUE "\033[94m"
 # define LIGHT_CYAN "\033[96m"
-
-// MODE - Change the channel’s mode:
-// · i: Set/remove Invite-only channel
-// · t: Set/remove the restrictions of the TOPIC command to channel operators
-// · k: Set/remove the channel key (password)
-// · o: Give/take channel operator privilege
-// · l: Set/remove the user limit to channel
-
-typedef struct s_channel_modes
-{
-	bool	mode_i;
-	bool	mode_t;
-	bool	mode_k;
-	bool	mode_o;
-	bool	mode_l;
-}	t_channel_modes;

@@ -4,14 +4,17 @@
 # include "ft_irc.hpp"
 # include "Client.hpp"
 # include "Message.hpp"
+# include "Channel.hpp"
 
 class Client;
 class Message;
+class Channel;
 
 
 class Server {
 	friend class Client;
 	friend class Message;
+	friend class Channel;
 
 	public:
 		typedef void (Server::*ptr)(const int&, Message&);
@@ -37,6 +40,12 @@ class Server {
 		void lusers(const int& fd, Message& message);
 		void motd(const int& fd, Message& message);
 		void join(const int& fd, Message& message);
+		void mode(const int& fd, Message& message);
+		void privmsg(const int& fd, Message& message);
+		void part(const int& fd, Message& message);
+		void topic(const int& fd, Message& message);
+		void invite(const int& fd, Message& message);
+		void kick(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -44,8 +53,10 @@ class Server {
 
 		//messaging
 		void send_message(const int& fd, std::string message);
-
+		//INVITE
+		Client*			get_client_by_nickname(std::string nickname);
 	private:
+		std::vector<Channel*>	channels;
 		std::vector<ptr> commands;
 		std::vector<Client*> clients;
 		std::vector<pollfd> fds_poll;
@@ -79,4 +90,24 @@ class Server {
 
 
 		void send_welcome(Client*  client, Message& message);
+
+		bool find_channel(std::string name);
+		std::vector<Channel*>::iterator	get_channel_by_name(std::string name);
+
+		//channel
+		void							create_channel(std::string name, Client *client);
+		void							join_channel(std::string name, Client *client, Message& message);
+		bool							can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args);
+		bool							is_valid_channel_name(std::string name);
+
+		void							add_channel(Channel *channel);
+
+		bool							client_exists(std::string nick);
+		
+		//MODE
+		bool							is_valid_mode(std::string mode, Client *client);
+		void							change_mode(std::string mode, Client *client, Channel *channel);
+
+		//Channel
+		void							remove_channel(Channel *channel);
 };

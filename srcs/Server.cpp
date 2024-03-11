@@ -183,8 +183,11 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 		{
-			// std::cout << ORANGE << message.cmd << RESET << std::endl;
-			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" || message.cmd == "JOIN" 
+			std::cout << PINK << message.message << RESET << std::endl;
+			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
+			//!BYPASS
+				// (this->*(*cmd))((*client)->fd, message);
+			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
 				|| check_valid_user(*client, message))
 				(this->*(*cmd))((*client)->fd, message);
 			// else
@@ -293,6 +296,12 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "LUSERS") return std::find(commands.begin(), commands.end(), &Server::lusers);
 	if (name == "MOTD") return std::find(commands.begin(), commands.end(),  &Server::motd);
 	if (name == "JOIN") return std::find(commands.begin(), commands.end(),  &Server::join);
+	if (name == "MODE") return std::find(commands.begin(), commands.end(),  &Server::mode);
+	if (name == "PRIVMSG") return std::find(commands.begin(), commands.end(),  &Server::privmsg);
+	if (name == "PART") return std::find(commands.begin(), commands.end(),  &Server::part);
+	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
+	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
+	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
 	return (commands.end());
 }
 
@@ -307,6 +316,12 @@ void Server::save_commands()
 	commands.push_back(&Server::lusers);
 	commands.push_back(&Server::motd);
 	commands.push_back(&Server::join);
+	commands.push_back(&Server::mode);
+	commands.push_back(&Server::privmsg);
+	commands.push_back(&Server::part);
+	commands.push_back(&Server::topic);
+	commands.push_back(&Server::invite);
+	commands.push_back(&Server::kick);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -323,4 +338,142 @@ void Server::send_message(const int &fd, std::string message)
 		(*client)->send_leftovers = message.substr(read);
 	}
 	std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+}
+
+bool	Server::find_channel(std::string name) //TODO
+{
+	std::vector<Channel *>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+		if ((*it)->get_name() == name)
+			return (true);
+	return (false);
+}
+
+std::vector<Channel*>::iterator Server::get_channel_by_name(std::string name)
+{
+	for (std::vector<Channel*>::iterator iter = channels.begin(); iter != channels.end(); iter++)
+	{
+		if ((*iter)->get_name() == name)
+			return iter;
+	}
+	return channels.end();
+}
+
+bool	Server::is_valid_channel_name(std::string name)
+{
+	if (name[0] != '#' || name.size() < 2)
+		return false;
+	for (size_t i = 1; i < name.size(); i++)
+	{
+		if (name[i] == ' ' || name[i] == ',' || name[i] == ':' || name[i] == '\r' || name[i] == '\n')
+			return false;
+	}
+	return true;
+}
+
+void	Server::create_channel(std::string name, Client *client)
+{
+	Channel *channel = new Channel(name, client);
+	this->add_channel(channel);
+	client->join_channel(channel);
+	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
+	channel->broadcast_message(RPL_MODE(channel->get_name(), std::string("ft_irc"), "+to " + client->nickname));
+}
+
+void	Server::join_channel(std::string name, Client *client, Message& message) //TODO
+{
+	Channel *channel = *(get_channel_by_name(name));
+
+	if (can_join_channel(client, channel, message.args) == false)
+		return ;
+	client->join_channel(channel);
+	channel->add_client(client);
+	std::cout << RPL_JOIN(client->get_realname(), name) << std::endl;
+	channel->broadcast_message(RPL_JOIN(client->get_realname(), name));
+	if (channel->get_topic().empty())
+		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
+	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
+	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
+}
+
+bool	Server::can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args) //TODO
+{
+	if (channel->get_mode().k == true)
+	{
+		if (args[1] != channel->get_password())
+			send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
+		else
+			return (true);
+	}
+	else if (channel->get_mode().i == true)
+	{
+		if (client->is_invited_to(channel->get_name()) == false)
+			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
+		else
+		{
+			client->remove_invitation(channel->get_name());
+			return (true);
+		}
+	}
+	else if(channel->get_mode().l == true)
+	{
+		if (channel->get_max_clients() <= channel->get_current_clients())
+			send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
+		else
+			return (true);
+	}
+	else
+		return (true);
+	return (false);
+}
+
+void	Server::add_channel(Channel *channel)
+{
+	channels.push_back(channel);
+}
+
+bool	Server::is_valid_mode(std::string mode, Client *client)
+{
+	std::string flags_op;
+
+	if (mode[0] != '+' && mode[0] != '-')
+		return false;
+	flags_op = mode.substr(1);
+	for(size_t i = 0; i < flags_op.size(); i++)
+		if (flags_op[i] != 'i' && flags_op[i] != 't' && flags_op[i] != 'k' && flags_op[i] != 'o' && flags_op[i] != 'l')
+		{
+			send_message(client->fd, ERR_UNKNOWNMODE(client->get_realname(), flags_op[i]));
+			return false;
+		}
+	return true;
+}
+
+bool	Server::client_exists(std::string nickname)
+{
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->nickname == nickname)
+			return true;
+	}
+	return false;
+}
+
+Client *Server::get_client_by_nickname(std::string nickname)
+{
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->nickname == nickname)
+			return *iter;
+	}
+	return NULL;
+}
+
+void	Server::remove_channel(Channel *channel)
+{
+	std::vector<Channel*>::iterator it = std::find(channels.begin(), channels.end(), channel);
+	if (it != channels.end())
+		channels.erase(it);
+	else 
+		std::cout << "There was a problem, channel not found" << std::endl; 
+	delete (channel);
 }
