@@ -33,18 +33,14 @@ std::string generate_token(void)
 	return token;
 }
 
-std::string get_time(void)
-{
-	time_t tt;
-	struct tm *tt_info;
-	char  buffer[50];
-
-	time(&tt);
-	tt_info = localtime(&tt);
-	strftime(buffer, 50, "[%d/%m/%Y][%H:%M:%S]", tt_info);
-	std::string str(buffer);
-	return str;
+std::string get_time() {
+    std::time_t now = std::time(nullptr);
+    std::tm* local_time = std::gmtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%a %b %d %Y at %H:%M:%S UTC", local_time);
+    return std::string(buffer);
 }
+
 
 std::string int_to_string(int num)
 {

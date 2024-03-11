@@ -63,3 +63,78 @@ std::string Client::get_realname()
 	return realname;
 }
 
+bool	Client::is_in_channel(std::string name)
+{
+	std::vector<Channel*>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->get_name() == name)
+			return (true);
+	}
+	return (false);
+}
+
+void	Client::invited_to(std::string channel_name)
+{
+	channel_invitations.push_back(channel_name);
+}
+
+void	Client::remove_invitation(std::string channel_name)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channel_invitations.begin(); it != channel_invitations.end(); ++it)
+	{
+		if (*it == channel_name)
+		{
+			channel_invitations.erase(it);
+			return ;
+		}
+	}
+}
+
+bool	Client::is_invited_to(std::string channel_name)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channel_invitations.begin(); it != channel_invitations.end(); ++it)
+	{
+		if (*it == channel_name)
+			return (true);
+	}
+	return (false);
+}
+
+void	Client::join_channel(Channel *channel)
+{
+	channels.push_back(channel);
+}
+
+void	Client::send_message(std::string message)
+{
+	int	fd = this->fd;
+	int total = 0;
+	int	bytesleft = message.size();
+	int	byteswritten;
+
+	while (total < (int)message.size())
+	{
+		byteswritten = send(fd, message.c_str() + total, bytesleft, 0);
+		if (byteswritten == -1)
+			break;
+		total += byteswritten;
+		bytesleft -= byteswritten;
+	}
+	std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+}
+
+void	Client::leave_channel(Channel *channel)
+{
+	std::vector<Channel*>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)->get_name() == channel->get_name())
+		{
+			channels.erase(it);
+			return ;
+		}
+	}
+}

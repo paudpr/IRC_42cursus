@@ -12,6 +12,7 @@ SRCS = main.cpp \
 		Server.cpp \
 		Client.cpp \
 		Message.cpp \
+		Channel.cpp \
 		commands.cpp \
 		utils.cpp 
 
