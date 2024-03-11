@@ -14,9 +14,14 @@
 # define RPL_MYINFO(client, servername, version, availableUserModes, availableChannelModes) ":ft_irc 004 " + client + " " + servername + " " + version + " " + availableUserModes + " " + availableChannelModes + IRC_ENDLINE
 # define RPL_ISUPPORT(client) ":ft_irc 005 " + client +  " CHARSET=ascii CHANTYPES=# PREFIX=(o)@ NAMESX=NO :are supported by this server" + IRC_ENDLINE
 
-# define RPL_LUSERCLIENT(client, num) "[251] " + client + ":There are " + num + " users in this server" + IRC_ENDLINE
-# define RPL_LUSEROP(client, num ) "[252] "  + client + " "  + num + " :operator(s) online" + IRC_ENDLINE
-# define RPL_LUSERUNKNOWN(client) "[253] unknown connections" 
+// LUSER
+# define RPL_LUSERCLIENT(client, num) ":ft_irc 251 " + client + " :There are " + num + " users and 0 services on 1 servers" + IRC_ENDLINE
+# define RPL_LUSEROP(client, num ) ":ft_irc 252 " + client + " " + num + " :operator(s) online" + IRC_ENDLINE
+# define RPL_LUSERUNKNOWN(client) ":ft_irc 253 " + client + " 0 :unknown connection(s)" + IRC_ENDLINE
+# define RPL_LUSERCHANNELS(client, num) ":ft_irc 254 " + client + " " + num + " :channels formed" + IRC_ENDLINE
+# define RPL_LUSERME(client, num, num2) ":ft_irc 255 " + client + " :I have " + num + " clients and " + num2 + " servers" + IRC_ENDLINE
+# define RPL_lOCALUSERS(client, num, max) ":ft_irc 265 " + client + " :Current local users: " + num + ", max: " + max + IRC_ENDLINE
+# define RPL_GLOBALUSERS(client, num, max) ":ft_irc 266 " + client + " :Current global users: " + num + ", max: " + max + IRC_ENDLINE
 
 # define RPL_MOTDSTART(client) "[375] " + client + ":-Start Message of the Day" + IRC_ENDLINE
 # define RPL_MOTD "[372] :<line  of the motd"
@@ -75,6 +80,37 @@
 # define ERR_USERNOTINCHANNEL(client, nick, channel) ":ft_irc 441 " + client + " " + nick + " " + channel + " :They aren't on that channel" + IRC_ENDLINE
 
 // * COMMANDS
+
+// WHOIS
+
+// // RPL_WHOISCERTFP (276)
+// // RPL_WHOISREGNICK (307)
+// // RPL_WHOISUSER (311)
+// // RPL_WHOISSERVER (312)
+// // RPL_WHOISOPERATOR (313)
+// // RPL_WHOISIDLE (317)
+// // RPL_WHOISCHANNELS (319)
+// // RPL_WHOISSPECIAL (320)
+// // RPL_WHOISACCOUNT (330)
+// RPL_WHOISACTUALLY (338)
+// // RPL_WHOISHOST (378)
+// RPL_WHOISMODES (379)
+// RPL_WHOISSECURE (671)
+// RPL_AWAY (301)
+# define RPL_WHOISCERTFP(client, nick, fingerprint) ":ft_irc 276 " + client + " " + nick + " :has client certificate fingerprint " + fingerprint + IRC_ENDLINE
+# define RPL_WHOISREGNICK(client, nick) ":ft_irc 307 " + client + " " + nick + " :has identified for this nick" + IRC_ENDLINE
+# define RPL_WHOISUSER(client, nick, username, hostname, realname) ":ft_irc 311 " + client + " " + nick + " " + username + " " + hostname + " * :" + realname + IRC_ENDLINE
+# define RPL_WHOISSERVER(client, nick, servername, serverinfo) ":ft_irc 312 " + client + " " + nick + " " + servername + " :" + serverinfo + IRC_ENDLINE
+# define RPL_WHOISOPERATOR(client, nick) ":ft_irc 313 " + client + " " + nick + " :is an IRC operator" + IRC_ENDLINE
+# define RPL_WHOISIDLE(client, nick, secs, signon) ":ft_irc 317 " + client + " " + nick + " " + idle + " " + signon + " :seconds idle, signon time" + IRC_ENDLINE
+# define RPL_WHOISCHANNELS(client, nick, channels) ":ft_irc 319 " + client + " " + nick + " :" + channels + IRC_ENDLINE
+# define RPL_WHOISSPECIAL(client, nick, especial) ":ft_irc 320 " + client + " " + nick + " :" + especial + IRC_ENDLINE
+# define RPL_WHOISACCOUNT(client, nick, account) ":ft_irc 330 " + client + " " + nick + " " + account + " :is logged in as" + IRC_ENDLINE
+# define RPL_WHOISACTUALLY(client, nick, user, host, server, ip, realname) ":ft_irc 338 " + client + " " + nick + " " + user + " " + host + " " + server + " " + ip + " :" + realname + IRC_ENDLINE
+# define RPL_WHOISHOST(client, nick) ":ft_irc 378 " + client + " " + nick + " :is connecting from *@localhost 127.0.0.1" + IRC_ENDLINE
+# define RPL_WHOISMODES(client, nick, modes) ":ft_irc 379 " + client + " " + nick + " :is using modes " + modes + IRC_ENDLINE
+# define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
+# define RPL_AWAY(client, nick, message) ":ft_irc 301 " + client + " " + nick + " :" + message + IRC_ENDLINE
 
 // INVITE
 # define RPL_INVITING(client, nick, channel) ":ft_irc 341 " + client + " " + nick + " " + channel + IRC_ENDLINE

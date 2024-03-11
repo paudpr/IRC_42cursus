@@ -123,9 +123,12 @@ void Server::lusers(const int& fd, Message& message)
 	(void)message;
 	Client *client = *(get_client_byfd(fd));
 	send_message(fd, RPL_LUSERCLIENT(client->nickname, int_to_string(client->server->clients.size())));
-	send_message(fd, RPL_LUSEROP(client->nickname, int_to_string(5)));	//arreglar numero cuando tenga operadores
-	// send_message(RPL_LUSERUNKNOWN(client->nickname));
-	// revisar resto de repplies de LUSERS 
+	send_message(fd, RPL_LUSEROP(client->nickname, "0"));	//arreglar numero cuando tenga operadores
+	send_message(fd, RPL_LUSERUNKNOWN(client->nickname));
+	send_message(fd, RPL_LUSERCHANNELS(client->nickname, int_to_string(client->server->channels.size())));
+	send_message(fd, RPL_LUSERME(client->nickname, int_to_string(client->server->clients.size()), "1"));
+	send_message(fd, RPL_lOCALUSERS(client->nickname, int_to_string(client->server->clients.size()), "1")); //Tercer argumento es el maximo de clientes conectados
+	send_message(fd, RPL_GLOBALUSERS(client->nickname, "0", "0")); //Tercer argumento es el maximo de clientes conectados
 }
 
 void Server::send_welcome(Client *client, Message &message)
@@ -175,10 +178,17 @@ bool Server::check_valid_user(Client *client, Message& message)
 	return true;
 }
 
+//TODO: Replies
 void Server::whois(const int& fd, Message& message)
 {
-	(void)fd;
-	(void)message;
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "WHOIS"));
+	std::string nick = message.args[0];
+	Client *whois = get_client_by_nickname(nick);
+	if (whois == NULL)
+		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), nick));
+	
 	std::cout << "Command WOHIS" << std::endl;
 }
 
