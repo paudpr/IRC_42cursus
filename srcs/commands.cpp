@@ -322,44 +322,63 @@ void	Server::mode(const int& fd, Message& message)
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
 //TODO: RPL_AWAY (301)
+//?Testear
 void	Server::privmsg(const int& fd, Message& message)
 {
-	std::vector<Client *>::iterator client_it = get_client_byfd(fd);
-	if (client_it == clients.end())
-		return ;
-	Client *client = *client_it;
+	Client *client = *(get_client_byfd(fd));
+	Channel *channel;
+	std::vector<Channel *>::iterator channel_it;
+	std::string target;
+	std::string msg;
+	std::string args;
+	std::vector<std::string> targets;
+	std::vector<std::string>::iterator iter;
+	std::vector<std::string> last_args;
+
 	if (message.args.size() == 0)
 		return send_message(fd, ERR_NORECIPIENT(client->get_realname(), "PRIVMSG"));
 	if (message.args.size() == 1)
 		return send_message(fd, ERR_NOTEXTTOSEND(client->get_realname()));
-	std::string	target = message.args[0];
-	std::vector<Channel *>::iterator channel_it = get_channel_by_name(target);
-	if (channel_it != channels.end())
-	{
-		Channel *channel = *channel_it;
-		if (client->is_in_channel(channel->get_name()) == false)
-			return ;
-		std::string msg = join_split(message.args, 1);
-		if (msg.empty())
-			return;
-		if (msg[0] == ':')
-			msg.erase(0, 1);
-		if (client->is_in_channel(channel->get_name()) == false)
-			return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
-		channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
-	}
-	else if (client_exists(target))
-	{
-		Client *target_client = get_client_by_nickname(target);
-		std::string msg = join_split(message.args, 1);
-		if (msg.empty())
-			return;
-		if (msg[0] == ':')
-			msg.erase(0, 1);
-		target_client->send_message(RPL_PRIVMSG(client->nickname, target_client->nickname, msg));
-	}
+
+	args = join_split(message.args, 0);
+	targets = split(args, ',');
+	last_args = split(targets.back(), ' ');
+	if (last_args.size() > 1)
+		msg = join_split(last_args, 1);
 	else
-		send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+		msg = "";
+	if (msg.empty())
+		return ;
+	targets.pop_back();
+	targets.push_back(last_args[0]);
+	std::cout << join_split(targets, 0) << std::endl;
+	for (iter = targets.begin(); iter != targets.end(); ++iter)
+	{
+		target = *iter;
+		if (target.empty())
+			return ;
+		channel_it = get_channel_by_name(target);
+		if (channel_it != channels.end())
+		{
+			channel = *channel_it;
+			if (client->is_in_channel(channel->get_name()) == false)
+				return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
+			if (msg[0] == ':')
+				msg.erase(0, 1);
+			channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
+		}
+		else if (client_exists(target))
+		{
+			Client *target_client = get_client_by_nickname(target);
+			if (target_client == NULL)
+				return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+			if (msg[0] == ':')
+				msg.erase(0, 1);
+			target_client->send_message(RPL_PRIVMSG(client->nickname, target_client->nickname, msg));
+		}
+		else
+			send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+	}
 }
 
 /*
