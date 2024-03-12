@@ -126,26 +126,30 @@
 # define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
 # define RPL_AWAY(client, nick, message) ":ft_irc 301 " + client + " " + nick + " :" + message + IRC_ENDLINE
 
-// INVITE
+// * LIST
+# define RPL_LISTSTART(client) ":ft_irc 321 " + client + " :Channel :Users Name" + IRC_ENDLINE
+# define RPL_LIST(client, channel, users, topic) ":ft_irc 322 " + client + " " + channel + " " + users + " :" + topic + IRC_ENDLINE
+# define RPL_LISTEND(client) ":ft_irc 323 " + client + " :End of /LIST" + IRC_ENDLINE
+
+
+// * INVITE
 # define RPL_INVITING(client, nick, channel) ":ft_irc 341 " + client + " " + nick + " " + channel + IRC_ENDLINE
 
-// TOPIC
+// * TOPIC
 # define RPL_TOPIC(client, channel, topic) ":ft_irc 332 " + client + " " + channel + " :" + topic + IRC_ENDLINE
 # define RPL_NOTICETOPIC(client, channel, topic) ":" + client + " TOPIC " + channel + " " + topic + IRC_ENDLINE
 
-// PRIVMSG
+// * PRIVMSG
 # define RPL_PRIVMSG(client, target, message) ":" + client + " PRIVMSG " + target + " :" + message + IRC_ENDLINE
 
-
-
-// MODE
+// * MODE
 # define RPL_MODE(channel, client, modes) ":" + client + " MODE " + channel + " " + modes + IRC_ENDLINE
 
-//JOIN
+// * JOIN
 # define RPL_JOIN(client, channel) ":" + client + " JOIN " + channel + IRC_ENDLINE
 
-// PART
-# define RPL_PART(client, channel) ":" + client + " PART " + channel + IRC_ENDLINE
+// * PART
+# define RPL_PART(client, channel, message) ":" + client + " PART " + channel + " " + message + IRC_ENDLINE
 
-// KICK
+// * KICK
 # define RPL_KICK(client, channel, nick) ":" + client + " KICK " + channel + " " + nick + IRC_ENDLINE

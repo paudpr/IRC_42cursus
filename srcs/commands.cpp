@@ -245,7 +245,7 @@ void Server::pong(const int& fd, Message& message)
 *		- Si el canal existe, se une.
 *		- Si el canal está bloqueado, se notifica.
 */
-//? Testear: 
+//? Testear
 void	Server::join(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -313,12 +313,6 @@ void	Server::mode(const int& fd, Message& message)
 *		- Si el canal no existe, se notifica.
 *		- Si el canal existe, se envía el mensaje.
 */
-// // //TODO: ERR_NOSUCHNICK (401)
-// // //TODO: ERR_NOSUCHSERVER (402)
-//TODO: ERR_CANNOTSENDTOCHAN (404)
-//TODO: ERR_TOOMANYTARGETS (407)
-//TODO: ERR_NORECIPIENT (411)
-//TODO: ERR_NOTEXTTOSEND (412)
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
 // //TODO: RPL_AWAY (301)
@@ -338,6 +332,8 @@ void	Server::privmsg(const int& fd, Message& message)
 	if (channel_it != channels.end())
 	{
 		Channel *channel = *channel_it;
+		if (client->is_in_channel(channel->get_name()) == false)
+			return ;
 		std::string msg = join_split(message.args, 1);
 		if (msg.empty())
 			return;
@@ -369,28 +365,52 @@ void	Server::privmsg(const int& fd, Message& message)
 *		- Si el cliente no está en el canal, se notifica.
 *		- Si el cliente está en el canal, se elimina.
 */
+//?Testear
 void	Server::part(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
 	Channel *channel;
 	std::vector<Channel *>::iterator channel_it;
+	std::string channel_name;
+	std::string message_part;
+	std::string args;
+	std::vector<std::string> channels_names;
+	std::vector<std::string> last_args;
+	std::vector<std::string>::iterator iter;
+
 	if (message.args.size() < 1)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "PART"));
 
-	channel_it = get_channel_by_name(message.args[0]);
-	if (channel_it == channels.end())
-		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), message.args[0]));
-	channel = *channel_it;
+	args = join_split(message.args, 0);
+	channels_names = split(args, ',');
+	last_args = split(channels_names.back(), ' ');
+	if (last_args.size() > 1)
+		message_part = join_split(last_args, 1);
+	else
+		message_part = "";
+	channels_names.pop_back();
+	channels_names.push_back(last_args[0]);
+	for (iter = channels_names.begin(); iter != channels_names.end(); ++iter)
+	{
+		channel_name = *iter;
+		if (channel_name.empty())
+			return ;
+		channel_it = get_channel_by_name(channel_name);
+		if (channel_it == channels.end())
+			return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), channel_name));
+		channel = *channel_it;
 
-	if (client->is_in_channel(channel->get_name()) == false)
-		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), message.args[0]));
-	client->leave_channel(channel);
-	channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name()));
-	channel->remove_client(client);
-	channel->decrease_clients();
-	if (channel->get_current_clients() == 0)
-		remove_channel(channel);
-	std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
+		if (client->is_in_channel(channel->get_name()) == false)
+			return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), channel_name));
+
+		client->leave_channel(channel);
+		channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name(), message_part));
+		channel->remove_client(client);
+		channel->decrease_clients();
+		if (channel->get_current_clients() == 0)
+			remove_channel(channel);
+		std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
+	}
 }
 
 /*
@@ -402,6 +422,7 @@ void	Server::part(const int& fd, Message& message)
 *		- Si el cliente está en el canal, pero no es operador, se notifica.
 *		- Si no hay topic, se notifica.
 */
+//?Testear
 void	Server::topic(const int& fd, Message& message)
 {
 	Channel *channel;
@@ -445,6 +466,7 @@ void	Server::topic(const int& fd, Message& message)
 *		- Si el cliente está en el canal, pero no es operador, y está bloqueado (+i), se notifica.
 *		- Si el usuario al que se quiere invitar ya está en el canal, se notifica.
 */
+//?Testear
 void	Server::invite(const int& fd, Message& message)
 {
 	std::string	channel_name;
@@ -485,18 +507,13 @@ void	Server::invite(const int& fd, Message& message)
 /*
 *	[KICK]
 *	Echar a un usuario del canal.
-// *		- Si falta el argumento, se notifica.
-// *		- Si el canal no existe, se notifica.
-// *		- Si no es operador, se notifica.
-// *		- Si el usuario no está en el canal, se notifica.
-*		- Si el usa el comando no esta en el canal, se notifica.
+*		- Si falta el argumento, se notifica.
+*		- Si el canal no existe, se notifica.
+*		- Si no es operador, se notifica.
+*		- Si el usuario no está en el canal, se notifica.
+*		- Si el usa el comando no esta en el canal, se notifica.	
 */
-//TODO:ERR_NEEDMOREPARAMS (461)
-//TODO:ERR_NOSUCHCHANNEL (403)
-//TODO:ERR_CHANOPRIVSNEEDED (482)
-//TODO:ERR_USERNOTINCHANNEL (441)
-//TODO:ERR_NOTONCHANNEL (442)
-
+//TODO: Echar mas de un usuario, y añadir un mensaje.
 void	Server::kick(const int& fd, Message& message)
 {
 	Channel *channel;
@@ -526,4 +543,33 @@ void	Server::kick(const int& fd, Message& message)
 	channel->broadcast_message(RPL_KICK(client->get_realname(), channel_name, nick));
 	channel->remove_client(kicked);
 	kicked->leave_channel(channel);
+}
+
+/*
+*	[LIST]
+*	Lista los canales y sus usuarios.
+*/
+//?Testear
+void	Server::list(const int& fd, Message& message)
+{
+	std::string channel_join;
+	std::vector<std::string> channel_list;
+	std::vector<Channel *>::iterator iter;
+	std::vector<Channel *> channels_to_list;
+	std::vector<Client *>::iterator client_it = get_client_byfd(fd);
+	if (client_it == clients.end())
+		return ;
+	Client *client = *client_it;
+	send_message(fd, RPL_LISTSTART(client->get_realname()));
+	if (message.args.size() > 0)
+	{
+		channel_join = join_split(message.args, 0);
+		channel_list = split(channel_join, ',');
+		for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
+			if (find_channel(*iter))
+				channels_to_list.push_back(*get_channel_by_name(*iter));
+	}
+	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
+		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
+	send_message(fd, RPL_LISTEND(client->get_realname()));
 }

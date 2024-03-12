@@ -300,6 +300,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
 	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
 	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
+	if (name == "LIST") return std::find(commands.begin(), commands.end(),  &Server::list);
 	return (commands.end());
 }
 
@@ -320,6 +321,7 @@ void Server::save_commands()
 	commands.push_back(&Server::topic);
 	commands.push_back(&Server::invite);
 	commands.push_back(&Server::kick);
+	commands.push_back(&Server::list);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -404,35 +406,28 @@ void	Server::join_channel(Client *client, std::string channel_name, std::string 
 	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
 }
 
-bool	Server::can_join_channel(Client *client, Channel *channel, std::string password) //TODO
+bool	Server::can_join_channel(Client *client, Channel *channel, std::string password)
 {
-	if (channel->get_mode().k == true)
-	{
-		if (password != channel->get_password())
-			send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
-		else
-			return (true);
+	if (channel->get_mode().k && password != channel->get_password()) {
+		send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
+		return false;
 	}
-	if (channel->get_mode().i == true)
-	{
-		if (client->is_invited_to(channel->get_name()) == false)
-			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
-		else
-		{
-			client->remove_invitation(channel->get_name());
-			return (true);
-		}
+
+	if (channel->get_mode().i && !client->is_invited_to(channel->get_name())) {
+		send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
+		return false;
 	}
-	if(channel->get_mode().l == true)
-	{
-		if (channel->get_max_clients() <= channel->get_current_clients())
-			send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
-		else
-			return (true);
+
+	if (channel->get_mode().i) {
+		client->remove_invitation(channel->get_name());
 	}
-	else
-		return (true);
-	return (false);
+
+	if (channel->get_mode().l && channel->get_max_clients() <= channel->get_current_clients()) {
+		send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
+		return false;
+	}
+
+	return true;
 }
 
 void	Server::add_channel(Channel *channel)
