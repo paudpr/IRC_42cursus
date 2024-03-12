@@ -252,19 +252,24 @@ void	Server::join(const int& fd, Message& message)
 	std::string channel_name;
 	std::string password;
 	std::string args = join_split(message.args, 0);
-	std::vector<std::string> channels = split(args, ',');
+	std::vector<std::string> args_split = split(args, ' ');
+	std::vector<std::string> channel_list;
+	std::vector<std::string> pass_list;
 	std::vector<std::string>::iterator iter;
 	std::vector<std::string> channel_args;
-	for (iter = channels.begin(); iter != channels.end(); iter++)
+
+	if (args_split.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "JOIN"));
+	channel_list = split(args_split[0], ',');
+	if (args_split.size() > 1)
+		pass_list = split(args_split[1], ',');
+	else
+		pass_list = std::vector<std::string>(channel_list.size(), "");
+	for(iter = channel_list.begin(); iter != channel_list.end(); iter++)
 	{
-		channel_args = split(*iter, ' ');
-		channel_name = channel_args[0];
+		channel_name = *iter;
 		if (channel_name.empty())
 			return ;
-		if (channel_args.size() > 1)
-			password = channel_args[1];
-		else
-			password = "";
 		if (channel_name[0] != '#')
 			channel_name = "#" + channel_name;
 		if (is_valid_channel_name(channel_name) == false)
@@ -272,12 +277,13 @@ void	Server::join(const int& fd, Message& message)
 		if (find_channel(channel_name) == false)
 			create_channel(channel_name, client);
 		else
-			join_channel(client, channel_name, password);
+			join_channel(client, channel_name, pass_list[iter - channel_list.begin()]);
 	}
+	
 }
 
 /*
-*	[MODE]
+*	[MODE] "MODE <target> [<modestring> [<mode arguments>...]]"
 *		- Si el cliente no es operador, se notifica.
 *		- Si el modo no es válido, se notifica.
 *		- Si el modo es válido, se cambia y se notifica a los usuarios del canal.
@@ -308,15 +314,14 @@ void	Server::mode(const int& fd, Message& message)
 }
 
 /*
-*	[PRIVMSG]
+*	[PRIVMSG] "PRIVMSG <target>{,<target>} <text to be sent>"
 *	Envía un mensaje a un canal o a un usuario.
 *		- Si el canal no existe, se notifica.
 *		- Si el canal existe, se envía el mensaje.
 */
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
-// //TODO: RPL_AWAY (301)
-//TODO: comprobar que el cliente esté en el canal
+//TODO: RPL_AWAY (301)
 void	Server::privmsg(const int& fd, Message& message)
 {
 	std::vector<Client *>::iterator client_it = get_client_byfd(fd);
