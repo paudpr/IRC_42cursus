@@ -301,6 +301,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
 	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
 	if (name == "LIST") return std::find(commands.begin(), commands.end(),  &Server::list);
+	if (name == "NAMES") return std::find(commands.begin(), commands.end(),  &Server::names);
 	return (commands.end());
 }
 
@@ -322,6 +323,7 @@ void Server::save_commands()
 	commands.push_back(&Server::invite);
 	commands.push_back(&Server::kick);
 	commands.push_back(&Server::list);
+	commands.push_back(&Server::names);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -377,6 +379,7 @@ void	Server::create_channel(std::string name, Client *client)
 	this->add_channel(channel);
 	client->join_channel(channel);
 	channel->increase_clients();
+	channel->set_creation_time(unix_time());
 	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
 	channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, "+o " + client->nickname));
 }

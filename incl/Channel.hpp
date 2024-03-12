@@ -29,6 +29,7 @@ class Channel
 		t_channel_modes			mode;
 		int						op_fd;
 		std::vector<int>		operators_fds;
+		std::string				creation_time;
 
 		//Modes
 		int						max_clients;
@@ -60,6 +61,7 @@ class Channel
 		void			set_max_clients(int users);
 		void			set_current_clients(int users);
 		void			set_password(std::string password);
+		void			set_creation_time(std::string creation_time);
 
 		//Getters
 		std::string		get_topic(void) const;
@@ -69,6 +71,7 @@ class Channel
 		int				get_max_clients(void) const;
 		int				get_current_clients(void) const;
 		std::string		get_password(void) const;
+		std::string		get_creation_time(void) const;
 
 		//Channel
 		Client*			find_client_by_nick(std::string nick);
@@ -93,5 +96,11 @@ class Channel
 		//Users
 		void			increase_clients(void);
 		void			decrease_clients(void);
+
+		//Names
+		std::string		get_names_list(Client *client);
+
+		//Mode
+		std::string		get_mode_string(void);
 };
 #endif

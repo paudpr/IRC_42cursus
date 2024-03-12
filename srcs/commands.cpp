@@ -267,7 +267,7 @@ void	Server::join(const int& fd, Message& message)
 		pass_list = split(args_split[1], ',');
 	else
 		pass_list = std::vector<std::string>(channel_list.size(), "");
-	for(iter = channel_list.begin(); iter != channel_list.end(); iter++)
+	for(iter = channel_list.begin(); iter != channel_list.end(); ++iter)
 	{
 		channel_name = *iter;
 		if (channel_name.empty())
@@ -281,7 +281,6 @@ void	Server::join(const int& fd, Message& message)
 		else
 			join_channel(client, channel_name, pass_list[iter - channel_list.begin()]);
 	}
-	
 }
 
 /*
@@ -306,6 +305,12 @@ void	Server::mode(const int& fd, Message& message)
 		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), args[0]));
 	channel = *channel_it;
 
+	if (args.size() == 1)
+	{
+		send_message(fd, RPL_CHANNELMODEIS(client->get_realname(), channel->get_name(), channel->get_mode_string()));
+		send_message(fd, RPL_CREATIONTIME(channel->get_name(), channel->get_name(), channel->get_creation_time()));
+		return ;
+	}
 	if (channel->is_operator(client) == false)
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
 	if (is_valid_mode(args[1], client) == false)
@@ -626,3 +631,24 @@ void	Server::list(const int& fd, Message& message)
 *	Command: NAMES
 *	Parameters: <channel>{,<channel>}
 */
+void	Server::names(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	std::vector<std::string> channels_names;
+	std::string args;
+	std::vector<Channel *> channel_list;
+	std::vector<std::string>::iterator iter;
+	std::vector<Channel *>::iterator channel_it;
+
+	args = join_split(message.args, 0);
+	channels_names = split(args, ',');
+	if (channels_names.size() == 0)
+		channel_list = channels;
+	else
+		for(iter = channels_names.begin(); iter != channels_names.end(); iter++)
+			if (find_channel(*iter))
+				channel_list.push_back(*get_channel_by_name(*iter));
+	for(channel_it = channel_list.begin(); channel_it != channel_list.end(); channel_it++)
+		send_message(fd, RPL_NAMREPLY(client->get_realname(), (*channel_it)->get_name(), (*channel_it)->get_list_of_clients(client)));
+	send_message(fd, RPL_ENDOFNAMES(client->get_realname(), ""));
+}
