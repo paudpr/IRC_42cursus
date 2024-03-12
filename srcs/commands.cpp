@@ -240,7 +240,9 @@ void Server::pong(const int& fd, Message& message)
 }
 
 /*
-*	[JOIN] "/JOIN <#channel>[,<channel>...] [password]"
+*	[JOIN] - Unirse a un canal
+*	Command: JOIN
+*	Parameters: <channel>{,<channel>} [<key>{,<key>}]
 *		- Si el canal no existe, se crea.
 *		- Si el canal existe, se une.
 *		- Si el canal está bloqueado, se notifica.
@@ -382,8 +384,9 @@ void	Server::privmsg(const int& fd, Message& message)
 }
 
 /*
-*	[PART]
-*	Abandona el canal, si no queda nadie, se elimina.
+*	[PART] - Abandona el canal, si no queda nadie, se elimina.
+*	Command: PART
+*	Parameters: <channel>{,<channel>} [<reason>]
 *		- Si faltan argumentos, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -438,8 +441,9 @@ void	Server::part(const int& fd, Message& message)
 }
 
 /*
-*	[TOPIC]
-*	Añade o modifica el topic del canal.
+*	[TOPIC] - Añade o modifica el topic del canal.
+*	Command: TOPIC
+*	Parameters: <channel> [<topic>]
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -482,8 +486,9 @@ void	Server::topic(const int& fd, Message& message)
 }
 
 /*
-*	[INVITE]
-*	Invitar a un usuario a un canal.
+*	[INVITE] - Invitar a un usuario a un canal.
+*	Command: INVITE
+*	Parameters: <nickname> <channel>
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -529,49 +534,65 @@ void	Server::invite(const int& fd, Message& message)
 }
 
 /*
-*	[KICK]
-*	Echar a un usuario del canal.
+*	[KICK] - Echar a un usuario del canal.
+*	Command: KICK
+*	Parameters: <channel> <user> *( "," <user> ) [<comment>]
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si no es operador, se notifica.
 *		- Si el usuario no está en el canal, se notifica.
-*		- Si el usa el comando no esta en el canal, se notifica.	
+*		- Si el que usa el comando no esta en el canal, se notifica.	
 */
 //TODO: Echar mas de un usuario, y añadir un mensaje.
 void	Server::kick(const int& fd, Message& message)
 {
+	Client *client = *(get_client_byfd(fd));
+	Client *kicked;
+	std::string channel_name;
+	std::vector<std::string> users;
+	std::vector<std::string>::iterator iter;
+	std::string comment;
 	Channel *channel;
 	std::vector<Channel *>::iterator channel_it;
-	Client *client = *(get_client_byfd(fd));
-	if (message.args.size() < 2)
+
+	std::string args = join_split(message.args, 0);
+	std::vector<std::string> args_split = split(args, ' ');
+
+	if (args_split.size() < 2)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "KICK"));
 
-	std::string	channel_name = message.args[0];
-	std::string	nick = message.args[1];
-
+	channel_name = args_split[0];
+	users = split(args_split[1], ',');
+	if (args_split.size() > 2)
+		comment = join_split(args_split, 2);
+	else
+		comment = "";
 	channel_it = get_channel_by_name(channel_name);
 	if (channel_it == channels.end())
 		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), channel_name));
 	channel = *channel_it;
-
-	if (channel->is_operator(client) == false)
-		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel_name));
-
-	Client *kicked = channel->find_client_by_nick(nick);
-	if (kicked == NULL)
-		return send_message(fd, ERR_USERNOTINCHANNEL(client->get_realname(), nick, channel_name));
-
+	
 	if (client->is_in_channel(channel_name) == false)
 		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), channel_name));
 
-	channel->broadcast_message(RPL_KICK(client->get_realname(), channel_name, nick));
-	channel->remove_client(kicked);
-	kicked->leave_channel(channel);
+	if (channel->is_operator(client) == false)
+		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel_name));
+	
+	for(iter = users.begin(); iter != users.end(); ++iter)
+	{
+		kicked = channel->find_client_by_nick(*iter);
+		if (kicked == NULL)
+			return send_message(fd, ERR_USERNOTINCHANNEL(client->get_realname(), *iter, channel_name));
+		channel->broadcast_message(RPL_KICK(client->get_realname(), channel_name, *iter, comment));
+		channel->remove_client(kicked);
+		kicked->leave_channel(channel);
+	}
 }
 
 /*
-*	[LIST]
-*	Lista los canales y sus usuarios.
+*	[LIST] - Lista los canales y sus usuarios.
+*	Command: LIST
+*	Parameters: [<channel>{,<channel>}]
 */
 //?Testear
 void	Server::list(const int& fd, Message& message)
@@ -595,5 +616,13 @@ void	Server::list(const int& fd, Message& message)
 	}
 	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
 		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
+	if (channels_to_list.empty())
+		send_message(fd, RPL_LIST(client->get_realname(), "", "", ""));
 	send_message(fd, RPL_LISTEND(client->get_realname()));
 }
+
+/*
+*	[NAMES]
+*	Command: NAMES
+*	Parameters: <channel>{,<channel>}
+*/

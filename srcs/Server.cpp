@@ -395,14 +395,14 @@ void	Server::join_channel(Client *client, std::string channel_name, std::string 
 		return ;
 	if (can_join_channel(client, channel, password) == false)
 		return ;
-	client->join_channel(channel);
-	channel->add_client(client);
 	channel->increase_clients();
 	std::cout << RPL_JOIN(client->get_realname(), channel_name) << std::endl;
+	client->join_channel(channel);
+	channel->add_client(client);
 	channel->broadcast_message(RPL_JOIN(client->get_realname(), channel_name));
 	if (channel->get_topic().empty())
 		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
-	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
+	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients(client)));
 	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
 }
 

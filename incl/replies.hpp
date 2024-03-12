@@ -152,4 +152,4 @@
 # define RPL_PART(client, channel, message) ":" + client + " PART " + channel + " " + message + IRC_ENDLINE
 
 // * KICK
-# define RPL_KICK(client, channel, nick) ":" + client + " KICK " + channel + " " + nick + IRC_ENDLINE
+# define RPL_KICK(client, channel, nick, comment) ":" + client + " KICK " + channel + " " + nick + " " + comment + IRC_ENDLINE

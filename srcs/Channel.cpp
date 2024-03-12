@@ -148,12 +148,14 @@ void	Channel::remove_client(Client* client)
 	}
 }
 
-std::string	Channel::get_list_of_clients(void)
+std::string	Channel::get_list_of_clients(Client *client)
 {
 	std::string list;
 	std::vector<Client*>::iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it)
 	{
+		if (*it == client)
+			continue ;
 		if (is_operator(*it))
 			list += "@";
 		else

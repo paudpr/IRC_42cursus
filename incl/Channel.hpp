@@ -76,7 +76,7 @@ class Channel
 		std::string		handle_mode(std::vector<std::string> args);
 
 		//JOIN
-		std::string		get_list_of_clients(void);
+		std::string		get_list_of_clients(Client *client);
 
 		//Send message
 		void			broadcast_message(std::string message);
