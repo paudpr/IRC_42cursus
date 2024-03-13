@@ -49,3 +49,25 @@ std::string int_to_string(int num)
 	std::string str = ss.str();
 	return str;
 }
+
+std::vector<std::string> split(const std::string& s, char delimiter)
+{
+    std::stringstream stream(s);
+	std::string token;
+	std::vector<std::string> tokens;
+
+	while (std::getline(stream, token, delimiter))
+		tokens.push_back(token);
+
+	return tokens;
+}
+
+std::vector<std::string> parse_join_args(std::string args)
+{
+	std::vector<std::string> parsed;
+	std::string token;
+	std::istringstream tokenStream(args);
+	while (std::getline(tokenStream, token, ' '))
+		parsed.push_back(token);
+	return parsed;
+}

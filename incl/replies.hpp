@@ -3,14 +3,10 @@
 // * Returned when a nickname parameter is expected for a command but isn’t given.
 # define ERR_NONICKNAMEGIVEN(client) ":ft_irc 431 " + client + " :No nickname given" + IRC_ENDLINE
 
-# define RPL_WELCOME(client) "001 " + client + " :Welcome to ft_IRC Network!" + IRC_ENDLINE
-# define RPL_YOURHOST(client, servername, version) "002 " + client + " :Your host is " + servername + ", running version " + version + "" + IRC_ENDLINE
-# define RPL_CREATED(client, date) "003 " + client + " :This server was created " + date + "" + IRC_ENDLINE
-# define RPL_MYINFO(client) "004 " + client + " :Reply my info con  toda la  mierda necesaria" + IRC_ENDLINE
-# define RPL_ISUPPORT(client) "005 " + client + " :MOTD File is: motd" + IRC_ENDLINE
 
 # define ERR_ALREADYREGISTERED(client) ":ft_irc 462 " + client + " :You may not reregister" + IRC_ENDLINE
 # define ERR_PASSWDMISMATCH(client) ":ft_irc 464 " + client + " :Password incorrect" + IRC_ENDLINE
+
 
 # define RPL_WELCOME(nick, username, hostname) ":ft_irc 001 " + nick + " :Welcome to the ft_irc Internet Relay Chat Network, " + nick + "[!" + username + "@" + hostname + "]" IRC_ENDLINE
 # define RPL_YOURHOST(client, servername, version) ":ft_irc 002 " + client + " :Your host is " + servername + ", running version " + version + IRC_ENDLINE
@@ -31,14 +27,16 @@
 # define RPL_MOTD "[372] :<line  of the motd"
 # define RPL_ENDOFMOTD(client) "[376] " + client + " :End of /MOTD command" + IRC_ENDLINE
 
+// * No such nick/channel
 # define ERR_NOSUCHNICK(client, nick) ":ft_irc 401 " + client + " " + nick + " :No such nick/channel" + IRC_ENDLINE
+
+// * No such server
 # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
 
-# define RPL_CHANGENICK(oldNick, newNick) ":" + oldNick + " NICK " + newNick + IRC_ENDLINE
+// * No such channel
+# define RPL_CHANGENICK(old_nick, new_nick) ":" + old_nick + " NICK " + new_nick + IRC_ENDLINE
 
-# define RPL_ENDOFWHOIS "318 RPL_ENDOFWHOIS"
-
-# define RPL_NONE(command, message) "300 " + command + " :"  + message + IRC_ENDLINE
+# define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
 
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."
 
@@ -73,32 +71,43 @@
 // * No topic is set
 # define RPL_TOPICWHOTIME(channel, nick, time) ":ft_irc 333 " + channel + " " + nick + " " + time + IRC_ENDLINE
 
+// * Channel created
 # define RPL_NAMREPLY(client, channel, names) ":ft_irc 353 " + client + " = " + channel + " :" + names + IRC_ENDLINE
+
+// * End of /NAMES list
 # define RPL_ENDOFNAMES(client, channel) ":ft_irc 366 " + channel + " :End of /NAMES list" + IRC_ENDLINE
 
+// * Uknonwn mode
 # define ERR_UNKNOWNMODE(client, modechar) ":ft_irc 472 " + client + " " + modechar + " :is unknown mode char to me" + IRC_ENDLINE
-# define ERR_CHANOPRIVSNEEDED(client, channel)":ft_irc 482 " + client + " " + channel + " :You're not channel operator" + IRC_ENDLINE
 
+// * You're not channel operator
+# define ERR_CHANOPRIVSNEEDED(client, channel)":ft_irc 482 " + client + " " + channel + " :You're not channel operator" + IRC_ENDLINE
 
 // * User on channel
 # define ERR_USERONCHANNEL(client, nick, channel) ":ft_irc 443 " + client + " " + nick + " " + channel + " :is already on channel" + IRC_ENDLINE
+
+// * They aren't on that channel
 # define ERR_USERNOTINCHANNEL(client, nick, channel) ":ft_irc 441 " + client + " " + nick + " " + channel + " :They aren't on that channel" + IRC_ENDLINE
+
+// ERR_NOTOPLEVEL (413)
+// ERR_WILDTOPLEVEL (414)
+// * cannot send to channel
+# define ERR_CANNOTSENDTOCHAN(client, channel) ":ft_irc 404 " + client + " " + channel + " :Cannot send to channel" + IRC_ENDLINE
+
+// * Too many recipients
+# define ERR_TOOMANYTARGETS(client, command) ":ft_irc 407 " + client + " " + command + " :Too many recipients" + IRC_ENDLINE
+
+// * No recipient given
+# define ERR_NORECIPIENT(client, command) ":ft_irc 411 " + client + " :No recipient given " + command + IRC_ENDLINE
+
+// * No text to send
+# define ERR_NOTEXTTOSEND(client) ":ft_irc 412 " + client + " :No text to send" + IRC_ENDLINE
+
 
 // * COMMANDS
 
 // WHOIS
-
-// // RPL_WHOISCERTFP (276)
-// // RPL_WHOISREGNICK (307)
-// // RPL_WHOISUSER (311)
-// // RPL_WHOISSERVER (312)
-// // RPL_WHOISOPERATOR (313)
-// // RPL_WHOISIDLE (317)
-// // RPL_WHOISCHANNELS (319)
-// // RPL_WHOISSPECIAL (320)
-// // RPL_WHOISACCOUNT (330)
 // RPL_WHOISACTUALLY (338)
-// // RPL_WHOISHOST (378)
 // RPL_WHOISMODES (379)
 // RPL_WHOISSECURE (671)
 // RPL_AWAY (301)
@@ -117,21 +126,32 @@
 # define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
 # define RPL_AWAY(client, nick, message) ":ft_irc 301 " + client + " " + nick + " :" + message + IRC_ENDLINE
 
-// INVITE
+// * LIST
+# define RPL_LISTSTART(client) ":ft_irc 321 " + client + " :Channel :Users Name" + IRC_ENDLINE
+# define RPL_LIST(client, channel, users, topic) ":ft_irc 322 " + client + " " + channel + " " + users + " :" + topic + IRC_ENDLINE
+# define RPL_LISTEND(client) ":ft_irc 323 " + client + " :End of /LIST" + IRC_ENDLINE
+
+
+// * INVITE
 # define RPL_INVITING(client, nick, channel) ":ft_irc 341 " + client + " " + nick + " " + channel + IRC_ENDLINE
 
-// TOPIC
+// * TOPIC
 # define RPL_TOPIC(client, channel, topic) ":ft_irc 332 " + client + " " + channel + " :" + topic + IRC_ENDLINE
 # define RPL_NOTICETOPIC(client, channel, topic) ":" + client + " TOPIC " + channel + " " + topic + IRC_ENDLINE
 
-// PRIVMSG
+// * PRIVMSG
 # define RPL_PRIVMSG(client, target, message) ":" + client + " PRIVMSG " + target + " :" + message + IRC_ENDLINE
 
-// MODE
+// * MODE
 # define RPL_MODE(channel, client, modes) ":" + client + " MODE " + channel + " " + modes + IRC_ENDLINE
 
-//JOIN
+// * JOIN
 # define RPL_JOIN(client, channel) ":" + client + " JOIN " + channel + IRC_ENDLINE
 
-// PART
-# define RPL_PART(client, channel) ":" + client + " PART " + channel + IRC_ENDLINE
+// * PART
+# define RPL_PART(client, channel, message) ":" + client + " PART " + channel + " " + message + IRC_ENDLINE
+
+// * KICK
+# define RPL_KICK(client, channel, nick) ":" + client + " KICK " + channel + " " + nick + IRC_ENDLINE
+
+# define RPL_NONE(client, message) ":ft_irc 300  "  + client + " :" + message + IRC_ENDLINE

@@ -46,6 +46,7 @@ class Server {
 		void topic(const int& fd, Message& message);
 		void invite(const int& fd, Message& message);
 		void kick(const int& fd, Message& message);
+		void list(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -96,8 +97,8 @@ class Server {
 
 		//channel
 		void							create_channel(std::string name, Client *client);
-		void							join_channel(std::string name, Client *client, Message& message);
-		bool							can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args);
+		void							join_channel(Client *client, std::string channel_name, std::string password);
+		bool							can_join_channel(Client *client, Channel *channel, std::string password);
 		bool							is_valid_channel_name(std::string name);
 
 		void							add_channel(Channel *channel);

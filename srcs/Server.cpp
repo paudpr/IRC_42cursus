@@ -102,7 +102,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	iter = fds_poll.begin();
 
 	Client	*client = new Client(fd_connection, connection_addr.sin_addr, this);
-	// client->is_online = true;
+	client->is_online = true;
 	client->ping_request = true;
 	clients.push_back(client);
 	
@@ -160,12 +160,11 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
-	// std::cout << YELLOW << buffer << RESET << std::endl;
+	// std::cout << LIGHT_CYAN << buffer << RESET << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
 	{
 		// cambiar a ejecutar comando QUIT ?????
-		// std::cout << "ESTOY AQUI" << std::endl;
 		remove_client(iter);
 		return ;
 	}
@@ -183,15 +182,14 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
 		if (cmd != commands.end())
 		{
-			std::cout << PINK << message.message << RESET << std::endl;
+
+			// std::cout << PINK << message.message << RESET << std::endl;
 			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
-			//!BYPASS
-				// (this->*(*cmd))((*client)->fd, message);
 			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
-				|| check_valid_user(*client, message))
+				|| (*client)->mode & VALID_CLIENT)
 				(this->*(*cmd))((*client)->fd, message);
-			// else
-			// 	send_message((*client)->fd, RPL_NONE(message.cmd, "Not connected to server"));
+			else
+				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
 		}
 	}
 }
@@ -272,7 +270,7 @@ void	Server::start()
 // 				send_message(client->fd, "[ ERROR ] Timeout");
 // 				remove_client(iter);
 // 			}
-// 			else if (client->ping_request ==  false && std::time(NULL) - client->time_now > PING_FREQ)
+// 			else if (client->ping_request == false && std::time(NULL) - client->time_now > PING_FREQ)
 // 			{
 // 				std::cout << "está entrando aqui" << std::endl;
 // 				client->ping_request = true;
@@ -302,6 +300,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "TOPIC") return std::find(commands.begin(), commands.end(),  &Server::topic);
 	if (name == "INVITE") return std::find(commands.begin(), commands.end(),  &Server::invite);
 	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
+	if (name == "LIST") return std::find(commands.begin(), commands.end(),  &Server::list);
 	return (commands.end());
 }
 
@@ -322,6 +321,7 @@ void Server::save_commands()
 	commands.push_back(&Server::topic);
 	commands.push_back(&Server::invite);
 	commands.push_back(&Server::kick);
+	commands.push_back(&Server::list);
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -376,55 +376,58 @@ void	Server::create_channel(std::string name, Client *client)
 	Channel *channel = new Channel(name, client);
 	this->add_channel(channel);
 	client->join_channel(channel);
+	channel->increase_clients();
 	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
-	channel->broadcast_message(RPL_MODE(channel->get_name(), std::string("ft_irc"), "+to " + client->nickname));
+	channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, "+o " + client->nickname));
 }
 
-void	Server::join_channel(std::string name, Client *client, Message& message) //TODO
+void	Server::join_channel(Client *client, std::string channel_name, std::string password) //TODO
 {
-	Channel *channel = *(get_channel_by_name(name));
+	std::vector<Channel*>::iterator channel_it;
+	Channel *channel;
 
-	if (can_join_channel(client, channel, message.args) == false)
+	channel_it = get_channel_by_name(channel_name);
+	if (channel_it == channels.end())
+		return ;
+	channel = *channel_it;
+
+	if (client->is_in_channel(channel_name))
+		return ;
+	if (can_join_channel(client, channel, password) == false)
 		return ;
 	client->join_channel(channel);
 	channel->add_client(client);
-	std::cout << RPL_JOIN(client->get_realname(), name) << std::endl;
-	channel->broadcast_message(RPL_JOIN(client->get_realname(), name));
+	channel->increase_clients();
+	std::cout << RPL_JOIN(client->get_realname(), channel_name) << std::endl;
+	channel->broadcast_message(RPL_JOIN(client->get_realname(), channel_name));
 	if (channel->get_topic().empty())
 		send_message(client->fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
 	send_message(client->fd, RPL_NAMREPLY(client->get_realname(), channel->get_name(), channel->get_list_of_clients()));
 	send_message(client->fd, RPL_ENDOFNAMES(client->get_realname(), channel->get_name()));
 }
 
-bool	Server::can_join_channel(Client *client, Channel *channel, std::vector<std::string> &args) //TODO
+bool	Server::can_join_channel(Client *client, Channel *channel, std::string password)
 {
-	if (channel->get_mode().k == true)
-	{
-		if (args[1] != channel->get_password())
-			send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
-		else
-			return (true);
+	if (channel->get_mode().k && password != channel->get_password()) {
+		send_message(client->fd, ERR_BADCHANNELKEY(client->get_realname(), channel->get_name()));
+		return false;
 	}
-	else if (channel->get_mode().i == true)
-	{
-		if (client->is_invited_to(channel->get_name()) == false)
-			send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
-		else
-		{
-			client->remove_invitation(channel->get_name());
-			return (true);
-		}
+
+	if (channel->get_mode().i && !client->is_invited_to(channel->get_name())) {
+		send_message(client->fd, ERR_INVITEONLYCHAN(client->get_realname(), channel->get_name()));
+		return false;
 	}
-	else if(channel->get_mode().l == true)
-	{
-		if (channel->get_max_clients() <= channel->get_current_clients())
-			send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
-		else
-			return (true);
+
+	if (channel->get_mode().i) {
+		client->remove_invitation(channel->get_name());
 	}
-	else
-		return (true);
-	return (false);
+
+	if (channel->get_mode().l && channel->get_max_clients() <= channel->get_current_clients()) {
+		send_message(client->fd, ERR_CHANNELISFULL(client->get_realname(), channel->get_name()));
+		return false;
+	}
+
+	return true;
 }
 
 void	Server::add_channel(Channel *channel)
