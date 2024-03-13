@@ -148,12 +148,14 @@ void	Channel::remove_client(Client* client)
 	}
 }
 
-std::string	Channel::get_list_of_clients(void)
+std::string	Channel::get_list_of_clients(Client *client)
 {
 	std::string list;
 	std::vector<Client*>::iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it)
 	{
+		if (*it == client)
+			continue ;
 		if (is_operator(*it))
 			list += "@";
 		else
@@ -162,6 +164,21 @@ std::string	Channel::get_list_of_clients(void)
 		list += " ";
 	}
 	return (list);
+}
+
+std::string Channel::get_names_list(Client *client)
+{
+	std::string list;
+	std::vector<Client*>::iterator it;
+	for (it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (*it == client)
+			continue ;
+		list += (*it)->nickname;
+		list += " ";
+	}
+	return (list);
+
 }
 
 // Add and remove operators
@@ -290,6 +307,11 @@ void	Channel::set_current_clients(int users)
 	this->max_clients = users;
 }
 
+void	Channel::set_creation_time(std::string creation_time)
+{
+	this->creation_time = creation_time;
+}
+
 std::string	Channel::get_topic(void) const
 {
 	return (this->topic);
@@ -323,4 +345,25 @@ int	Channel::get_max_clients(void) const
 int	Channel::get_current_clients(void) const
 {
 	return (this->current_clients);
+}
+
+std::string Channel::get_creation_time(void) const
+{
+	return (this->creation_time);
+}
+
+std::string Channel::get_mode_string(void)
+{
+	std::string mode = "+";
+	if (this->mode.i == true)
+		mode += "i";
+	if (this->mode.t == true)
+		mode += "t";
+	if (this->mode.k == true)
+		mode += "k";
+	// if (this->mode.o == true)
+	// 	mode += "o";
+	if (this->mode.l == true)
+		mode += "l";
+	return (mode);
 }

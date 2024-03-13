@@ -238,7 +238,9 @@ void Server::pong(const int& fd, Message& message)
 }
 
 /*
-*	[JOIN] "/JOIN <#channel>[,<channel>...] [password]"
+*	[JOIN] - Unirse a un canal
+*	Command: JOIN
+*	Parameters: <channel>{,<channel>} [<key>{,<key>}]
 *		- Si el canal no existe, se crea.
 *		- Si el canal existe, se une.
 *		- Si el canal está bloqueado, se notifica.
@@ -250,19 +252,24 @@ void	Server::join(const int& fd, Message& message)
 	std::string channel_name;
 	std::string password;
 	std::string args = join_split(message.args, 0);
-	std::vector<std::string> channels = split(args, ',');
+	std::vector<std::string> args_split = split(args, ' ');
+	std::vector<std::string> channel_list;
+	std::vector<std::string> pass_list;
 	std::vector<std::string>::iterator iter;
 	std::vector<std::string> channel_args;
-	for (iter = channels.begin(); iter != channels.end(); iter++)
+
+	if (args_split.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "JOIN"));
+	channel_list = split(args_split[0], ',');
+	if (args_split.size() > 1)
+		pass_list = split(args_split[1], ',');
+	else
+		pass_list = std::vector<std::string>(channel_list.size(), "");
+	for(iter = channel_list.begin(); iter != channel_list.end(); ++iter)
 	{
-		channel_args = split(*iter, ' ');
-		channel_name = channel_args[0];
+		channel_name = *iter;
 		if (channel_name.empty())
 			return ;
-		if (channel_args.size() > 1)
-			password = channel_args[1];
-		else
-			password = "";
 		if (channel_name[0] != '#')
 			channel_name = "#" + channel_name;
 		if (is_valid_channel_name(channel_name) == false)
@@ -270,12 +277,12 @@ void	Server::join(const int& fd, Message& message)
 		if (find_channel(channel_name) == false)
 			create_channel(channel_name, client);
 		else
-			join_channel(client, channel_name, password);
+			join_channel(client, channel_name, pass_list[iter - channel_list.begin()]);
 	}
 }
 
 /*
-*	[MODE]
+*	[MODE] "MODE <target> [<modestring> [<mode arguments>...]]"
 *		- Si el cliente no es operador, se notifica.
 *		- Si el modo no es válido, se notifica.
 *		- Si el modo es válido, se cambia y se notifica a los usuarios del canal.
@@ -296,6 +303,12 @@ void	Server::mode(const int& fd, Message& message)
 		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), args[0]));
 	channel = *channel_it;
 
+	if (args.size() == 1)
+	{
+		send_message(fd, RPL_CHANNELMODEIS(client->get_realname(), channel->get_name(), channel->get_mode_string()));
+		send_message(fd, RPL_CREATIONTIME(channel->get_name(), channel->get_name(), channel->get_creation_time()));
+		return ;
+	}
 	if (channel->is_operator(client) == false)
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
 	if (is_valid_mode(args[1], client) == false)
@@ -306,58 +319,76 @@ void	Server::mode(const int& fd, Message& message)
 }
 
 /*
-*	[PRIVMSG]
+*	[PRIVMSG] "PRIVMSG <target>{,<target>} <text to be sent>"
 *	Envía un mensaje a un canal o a un usuario.
 *		- Si el canal no existe, se notifica.
 *		- Si el canal existe, se envía el mensaje.
 */
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
-// //TODO: RPL_AWAY (301)
-//TODO: comprobar que el cliente esté en el canal
+//?Testear
 void	Server::privmsg(const int& fd, Message& message)
 {
-	std::vector<Client *>::iterator client_it = get_client_byfd(fd);
-	if (client_it == clients.end())
-		return ;
-	Client *client = *client_it;
+	Client *client = *(get_client_byfd(fd));
+	Channel *channel;
+	std::vector<Channel *>::iterator channel_it;
+	std::string target;
+	std::string msg;
+	std::string args;
+	std::vector<std::string> targets;
+	std::vector<std::string>::iterator iter;
+	std::vector<std::string> last_args;
+
 	if (message.args.size() == 0)
 		return send_message(fd, ERR_NORECIPIENT(client->get_realname(), "PRIVMSG"));
 	if (message.args.size() == 1)
 		return send_message(fd, ERR_NOTEXTTOSEND(client->get_realname()));
-	std::string	target = message.args[0];
-	std::vector<Channel *>::iterator channel_it = get_channel_by_name(target);
-	if (channel_it != channels.end())
-	{
-		Channel *channel = *channel_it;
-		if (client->is_in_channel(channel->get_name()) == false)
-			return ;
-		std::string msg = join_split(message.args, 1);
-		if (msg.empty())
-			return;
-		if (msg[0] == ':')
-			msg.erase(0, 1);
-		if (client->is_in_channel(channel->get_name()) == false)
-			return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
-		channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
-	}
-	else if (client_exists(target))
-	{
-		Client *target_client = get_client_by_nickname(target);
-		std::string msg = join_split(message.args, 1);
-		if (msg.empty())
-			return;
-		if (msg[0] == ':')
-			msg.erase(0, 1);
-		target_client->send_message(RPL_PRIVMSG(client->nickname, target_client->nickname, msg));
-	}
+
+	args = join_split(message.args, 0);
+	targets = split(args, ',');
+	last_args = split(targets.back(), ' ');
+	if (last_args.size() > 1)
+		msg = join_split(last_args, 1);
 	else
-		send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+		msg = "";
+	if (msg.empty())
+		return ;
+	targets.pop_back();
+	targets.push_back(last_args[0]);
+	std::cout << join_split(targets, 0) << std::endl;
+	for (iter = targets.begin(); iter != targets.end(); ++iter)
+	{
+		target = *iter;
+		if (target.empty())
+			return ;
+		channel_it = get_channel_by_name(target);
+		if (channel_it != channels.end())
+		{
+			channel = *channel_it;
+			if (client->is_in_channel(channel->get_name()) == false)
+				return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
+			if (msg[0] == ':')
+				msg.erase(0, 1);
+			channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
+		}
+		else if (client_exists(target))
+		{
+			Client *target_client = get_client_by_nickname(target);
+			if (target_client == NULL)
+				return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+			if (msg[0] == ':')
+				msg.erase(0, 1);
+			target_client->send_message(RPL_PRIVMSG(client->nickname, target_client->nickname, msg));
+		}
+		else
+			send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+	}
 }
 
 /*
-*	[PART]
-*	Abandona el canal, si no queda nadie, se elimina.
+*	[PART] - Abandona el canal, si no queda nadie, se elimina.
+*	Command: PART
+*	Parameters: <channel>{,<channel>} [<reason>]
 *		- Si faltan argumentos, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -412,8 +443,9 @@ void	Server::part(const int& fd, Message& message)
 }
 
 /*
-*	[TOPIC]
-*	Añade o modifica el topic del canal.
+*	[TOPIC] - Añade o modifica el topic del canal.
+*	Command: TOPIC
+*	Parameters: <channel> [<topic>]
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -456,8 +488,9 @@ void	Server::topic(const int& fd, Message& message)
 }
 
 /*
-*	[INVITE]
-*	Invitar a un usuario a un canal.
+*	[INVITE] - Invitar a un usuario a un canal.
+*	Command: INVITE
+*	Parameters: <nickname> <channel>
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si el cliente no está en el canal, se notifica.
@@ -503,49 +536,65 @@ void	Server::invite(const int& fd, Message& message)
 }
 
 /*
-*	[KICK]
-*	Echar a un usuario del canal.
+*	[KICK] - Echar a un usuario del canal.
+*	Command: KICK
+*	Parameters: <channel> <user> *( "," <user> ) [<comment>]
 *		- Si falta el argumento, se notifica.
 *		- Si el canal no existe, se notifica.
 *		- Si no es operador, se notifica.
 *		- Si el usuario no está en el canal, se notifica.
-*		- Si el usa el comando no esta en el canal, se notifica.	
+*		- Si el que usa el comando no esta en el canal, se notifica.	
 */
-//TODO: Echar mas de un usuario, y añadir un mensaje.
+//?Testear
 void	Server::kick(const int& fd, Message& message)
 {
+	Client *client = *(get_client_byfd(fd));
+	Client *kicked;
+	std::string channel_name;
+	std::vector<std::string> users;
+	std::vector<std::string>::iterator iter;
+	std::string comment;
 	Channel *channel;
 	std::vector<Channel *>::iterator channel_it;
-	Client *client = *(get_client_byfd(fd));
-	if (message.args.size() < 2)
+
+	std::string args = join_split(message.args, 0);
+	std::vector<std::string> args_split = split(args, ' ');
+
+	if (args_split.size() < 2)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "KICK"));
 
-	std::string	channel_name = message.args[0];
-	std::string	nick = message.args[1];
-
+	channel_name = args_split[0];
+	users = split(args_split[1], ',');
+	if (args_split.size() > 2)
+		comment = join_split(args_split, 2);
+	else
+		comment = "";
 	channel_it = get_channel_by_name(channel_name);
 	if (channel_it == channels.end())
 		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), channel_name));
 	channel = *channel_it;
-
-	if (channel->is_operator(client) == false)
-		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel_name));
-
-	Client *kicked = channel->find_client_by_nick(nick);
-	if (kicked == NULL)
-		return send_message(fd, ERR_USERNOTINCHANNEL(client->get_realname(), nick, channel_name));
-
+	
 	if (client->is_in_channel(channel_name) == false)
 		return send_message(fd, ERR_NOTONCHANNEL(client->get_realname(), channel_name));
 
-	channel->broadcast_message(RPL_KICK(client->get_realname(), channel_name, nick));
-	channel->remove_client(kicked);
-	kicked->leave_channel(channel);
+	if (channel->is_operator(client) == false)
+		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), channel_name));
+	
+	for(iter = users.begin(); iter != users.end(); ++iter)
+	{
+		kicked = channel->find_client_by_nick(*iter);
+		if (kicked == NULL)
+			return send_message(fd, ERR_USERNOTINCHANNEL(client->get_realname(), *iter, channel_name));
+		channel->broadcast_message(RPL_KICK(client->get_realname(), channel_name, *iter, comment));
+		channel->remove_client(kicked);
+		kicked->leave_channel(channel);
+	}
 }
 
 /*
-*	[LIST]
-*	Lista los canales y sus usuarios.
+*	[LIST] - Lista los canales y sus usuarios.
+*	Command: LIST
+*	Parameters: [<channel>{,<channel>}]
 */
 //?Testear
 void	Server::list(const int& fd, Message& message)
@@ -569,5 +618,35 @@ void	Server::list(const int& fd, Message& message)
 	}
 	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
 		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
+	if (channels_to_list.empty())
+		send_message(fd, RPL_LIST(client->get_realname(), "", "", ""));
 	send_message(fd, RPL_LISTEND(client->get_realname()));
+}
+
+/*
+*	[NAMES]
+*	Command: NAMES
+*	Parameters: <channel>{,<channel>}
+*/
+//?Testear
+void	Server::names(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	std::vector<std::string> channels_names;
+	std::string args;
+	std::vector<Channel *> channel_list;
+	std::vector<std::string>::iterator iter;
+	std::vector<Channel *>::iterator channel_it;
+
+	args = join_split(message.args, 0);
+	channels_names = split(args, ',');
+	if (channels_names.size() == 0)
+		channel_list = channels;
+	else
+		for(iter = channels_names.begin(); iter != channels_names.end(); iter++)
+			if (find_channel(*iter))
+				channel_list.push_back(*get_channel_by_name(*iter));
+	for(channel_it = channel_list.begin(); channel_it != channel_list.end(); channel_it++)
+		send_message(fd, RPL_NAMREPLY(client->get_realname(), (*channel_it)->get_name(), (*channel_it)->get_list_of_clients(client)));
+	send_message(fd, RPL_ENDOFNAMES(client->get_realname(), ""));
 }

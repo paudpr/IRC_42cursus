@@ -75,7 +75,7 @@
 # define RPL_NAMREPLY(client, channel, names) ":ft_irc 353 " + client + " = " + channel + " :" + names + IRC_ENDLINE
 
 // * End of /NAMES list
-# define RPL_ENDOFNAMES(client, channel) ":ft_irc 366 " + channel + " :End of /NAMES list" + IRC_ENDLINE
+# define RPL_ENDOFNAMES(client, channel) ":ft_irc 366 " + client + " " + channel + " :End of /NAMES list" + IRC_ENDLINE
 
 // * Uknonwn mode
 # define ERR_UNKNOWNMODE(client, modechar) ":ft_irc 472 " + client + " " + modechar + " :is unknown mode char to me" + IRC_ENDLINE
@@ -103,6 +103,8 @@
 // * No text to send
 # define ERR_NOTEXTTOSEND(client) ":ft_irc 412 " + client + " :No text to send" + IRC_ENDLINE
 
+// * 
+# define RPL_CREATIONTIME(client, channel, creationtime) ":ft_irc 329 " + client + " " + channel + " " + creationtime + IRC_ENDLINE
 
 // * COMMANDS
 
@@ -144,14 +146,16 @@
 
 // * MODE
 # define RPL_MODE(channel, client, modes) ":" + client + " MODE " + channel + " " + modes + IRC_ENDLINE
+# define RPL_CHANNELMODEIS(client, channel, mode) ":ft_irc 324 " + client + " " + channel + " " + mode + IRC_ENDLINE
 
 // * JOIN
 # define RPL_JOIN(client, channel) ":" + client + " JOIN " + channel + IRC_ENDLINE
+# define RPL_UMODEIS(client, usermode) ":ft_irc 221 " + client + " " + usermode + IRC_ENDLINE
 
 // * PART
 # define RPL_PART(client, channel, message) ":" + client + " PART " + channel + " " + message + IRC_ENDLINE
 
 // * KICK
-# define RPL_KICK(client, channel, nick) ":" + client + " KICK " + channel + " " + nick + IRC_ENDLINE
+# define RPL_KICK(client, channel, nick, comment) ":" + client + " KICK " + channel + " " + nick + " " + comment + IRC_ENDLINE
 
 # define RPL_NONE(client, message) ":ft_irc 300  "  + client + " :" + message + IRC_ENDLINE

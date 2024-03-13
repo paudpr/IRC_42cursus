@@ -8,3 +8,4 @@ std::string generate_token(void);
 std::string get_time(void);
 std::string int_to_string(int num);
 std::vector<std::string> split(const std::string& s, char delimiter);
+std::string unix_time(void);

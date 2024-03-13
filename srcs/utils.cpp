@@ -71,3 +71,10 @@ std::vector<std::string> parse_join_args(std::string args)
 		parsed.push_back(token);
 	return parsed;
 }
+
+std::string unix_time(void)
+{
+	std::time_t now = std::time(nullptr);
+	std::string time = std::to_string(now);
+	return time;
+}
