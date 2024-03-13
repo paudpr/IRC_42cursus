@@ -328,7 +328,6 @@ void	Server::mode(const int& fd, Message& message)
 */
 //TODO: ERR_NOTOPLEVEL (413)
 //TODO: ERR_WILDTOPLEVEL (414)
-//TODO: RPL_AWAY (301)
 //?Testear
 void	Server::privmsg(const int& fd, Message& message)
 {
@@ -548,7 +547,7 @@ void	Server::invite(const int& fd, Message& message)
 *		- Si el usuario no está en el canal, se notifica.
 *		- Si el que usa el comando no esta en el canal, se notifica.	
 */
-//TODO: Echar mas de un usuario, y añadir un mensaje.
+//?Testear
 void	Server::kick(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -631,6 +630,7 @@ void	Server::list(const int& fd, Message& message)
 *	Command: NAMES
 *	Parameters: <channel>{,<channel>}
 */
+//?Testear
 void	Server::names(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
