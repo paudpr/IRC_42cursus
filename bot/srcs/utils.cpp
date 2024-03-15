@@ -78,3 +78,70 @@ std::string getTime(void)
 	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
 	return (buf);
 }
+
+size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t			realsize = size * nmemb;
+	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+	char			*ptr = (char *)realloc(mem->memory, mem->size + realsize + 1);
+	if (ptr == NULL)
+	{
+		/* out of memory! */
+		std::cerr << "not enough memory (realloc returned NULL)" << std::endl;
+		return (0);
+	}
+	mem->memory = ptr;
+	memcpy(&(mem->memory[mem->size]), contents, realsize);
+	mem->size += realsize;
+	mem->memory[mem->size] = 0;
+	return (realsize);
+}
+
+std::vector<std::string> splitJson(std::string str)
+{
+	std::vector<std::string> result;
+	std::vector<std::string>::iterator it;
+	int	i = 0;
+	if (str[0] == '[')
+		str.erase(0, 1);
+	if (str[str.size() - 1] == ']')
+		str.erase(str.size() - 1, 1);
+	if (str[0] == '{')
+		str.erase(0, 1);
+	if (str[str.size() - 1] == '}')
+		str.erase(str.size() - 1, 1);
+	for (size_t j = 0; j < str.size(); j++)
+	{
+		if (str[j] == '{')
+			i++;
+		else if (str[j] == '}')
+			i--;
+		if (i == 0 && str[j] == ',')
+		{
+			result.push_back(str.substr(0, j + 1));
+			str.erase(0, j + 1);
+			j = 0;
+		}
+	}
+	result.push_back(str);
+	for (it = result.begin(); it != result.end(); ++it)
+		if (it->back() == ',')
+			it->erase(it->size() - 1, 1);
+	return (result);
+}
+
+std::string getByKey(std::vector<std::string> json, std::string key)
+{
+	std::vector<std::string>::iterator it;
+	std::string result;
+	key = "\"" + key + "\"";
+	for (it = json.begin(); it != json.end(); ++it)
+	{
+		if (it->substr(0, it->find(":")).find(key) != std::string::npos)
+		{
+			result = it->substr(it->find(":") + 1);
+			return (result);
+		}
+	}
+	return ("");
+}

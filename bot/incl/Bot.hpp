@@ -16,6 +16,7 @@ class Bot
 		struct pollfd				fd_poll;
 		struct addrinfo				*servinfo;
 		std::vector<std::string>	channels;
+		void						parseWeather(std::string channel, std::string json);
 	public:
 		// Orthodox canonical class
 		Bot(void);
@@ -59,8 +60,8 @@ class Bot
 		void	partHandler(std::string channel);
 		// * !time
 		void	timeHandler(std::string channel);
-		// // * !weather <city>
-		// void	weatherHandler(std::string nick, std::string channel, std::string city);
+		// * !weather <city>
+		void	weatherHandler(std::string channel, std::string city);
 
 		void	sendPrivmsg(std::string channel, std::string msg);
 

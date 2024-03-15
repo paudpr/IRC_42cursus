@@ -52,26 +52,14 @@ void	Bot::run(void)
 			throw std::runtime_error("[ ERROR ] Poll");
 		if (fd_poll.revents & POLLIN)
 			incomingMessage();
-		// else if (fd_poll.revents & POLLOUT)
-		// // Send message
-		// {
-		// 	std::cout << "Sending message" << std::endl;
-		// }
-		// else if (fd_poll.revents & POLLERR)
-		// // Error
-		// {
-		// 	std::cout << "Error" << std::endl;
-		// }
-		// else if (fd_poll.revents & POLLHUP)
-		// // Hangup
-		// {
-		// 	std::cout << "Hangup" << std::endl;
-		// }
-		// else if (fd_poll.revents & POLLNVAL)
-		// // Invalid request
-		// {
-		// 	std::cout << "Invalid request" << std::endl;
-		// }
+		else if (fd_poll.revents & POLLOUT)
+			std::cout << "Sending message" << std::endl;
+		else if (fd_poll.revents & POLLERR)
+			std::runtime_error("[ ERROR ] Poll error");
+		else if (fd_poll.revents & POLLHUP)
+			std::runtime_error("[ ERROR ] Poll HUP");
+		else if (fd_poll.revents & POLLNVAL)
+			std::runtime_error("[ ERROR ] Poll NVAL");
 	}
 }
 

@@ -3,6 +3,7 @@ NAME		=	ircbot
 CXX			=	c++
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra -g3
 CXXFLAGS	+=	-I $(INC_DIR)
+LDFLAGS		=	-lcurl
 DEBUGFLAGS = -fsanitize=address -g3
 
 OBJ_DIR = objs
@@ -27,7 +28,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 $(OBJS_DIR): | $(OBJ_DIR)
 
 $(NAME): $(OBJS_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJS_DIR) -o $(NAME)
+	$(CXX) $(CXXFLAGS) $(OBJS_DIR) -o $(NAME) $(LDFLAGS)
 
 $(OBJ_DIR): 
 	mkdir -p $(OBJ_DIR) 2> /dev/null

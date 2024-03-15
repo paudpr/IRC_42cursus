@@ -14,6 +14,7 @@
 # include <sys/socket.h>
 # include <stdio.h>
 #include <sys/errno.h>
+#include <curl/curl.h>
 
 # include <string>
 # include <map>
@@ -23,6 +24,7 @@
 # include <sstream>
 # include <algorithm>
 # include <functional>
+# include <cmath>
 
 #include "Bot.hpp"
 #include "utils.hpp"
