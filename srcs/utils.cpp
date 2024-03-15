@@ -34,7 +34,7 @@ std::string generate_token(void)
 }
 
 std::string get_time() {
-    std::time_t now = std::time(nullptr);
+    std::time_t now = std::time(NULL);
     std::tm* local_time = std::gmtime(&now);
     char buffer[80];
     std::strftime(buffer, sizeof(buffer), "%a %b %d %Y at %H:%M:%S UTC", local_time);
@@ -74,7 +74,7 @@ std::vector<std::string> parse_join_args(std::string args)
 
 std::string unix_time(void)
 {
-	std::time_t now = std::time(nullptr);
+	std::time_t now = std::time(NULL);
 	std::string time = std::to_string(now);
 	return time;
 }

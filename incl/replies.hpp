@@ -27,6 +27,13 @@
 # define RPL_MOTD "[372] :<line  of the motd"
 # define RPL_ENDOFMOTD(client) "[376] " + client + " :End of /MOTD command" + IRC_ENDLINE
 
+# define ERR_PASSWDMISMATCH(client) ":ft_irc 464 " + client + " :Password incorrect" + IRC_ENDLINE
+
+// * Returned when a nickname is legally formed but is not currently assigned to a client.
+# define ERR_ERRONEUSNICKNAME(client, nick) ":ft_irc 432 " + client + " " + nick + " :Erroneus nickname" + IRC_ENDLINE
+
+# define ERR_NICKNAMEINUSE(client, nick) ":ft_irc 433 " + client + " " + nick + " :Nickname is already in use" + IRC_ENDLINE
+
 // * No such nick/channel
 # define ERR_NOSUCHNICK(client, nick) ":ft_irc 401 " + client + " " + nick + " :No such nick/channel" + IRC_ENDLINE
 
