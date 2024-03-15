@@ -55,5 +55,6 @@ class Client {
 		void						remove_invitation(std::string channel_name);
 		bool						is_invited_to(std::string channel_name);
 		void						join_channel(Channel *channel);
-		bool						is_operator_in(std::string channel_name);
+		bool						is_operator_in(Channel* channel);
+		std::string					get_channel_names();
 };

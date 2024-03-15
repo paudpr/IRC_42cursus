@@ -72,6 +72,7 @@ class Channel
 		int				get_current_clients(void) const;
 		std::string		get_password(void) const;
 		std::string		get_creation_time(void) const;
+		std::vector<int>	get_operators_fds()  const;
 
 		//Channel
 		Client*			find_client_by_nick(std::string nick);

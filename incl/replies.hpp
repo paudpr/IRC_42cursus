@@ -36,7 +36,7 @@
 // * No such channel
 # define RPL_CHANGENICK(old_nick, new_nick) ":" + old_nick + " NICK " + new_nick + IRC_ENDLINE
 
-# define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
+// # define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
 
 # define RPL_ENDOFMOTD_MSG ":End of /MOTD command."
 
@@ -117,12 +117,13 @@
 # define RPL_WHOISREGNICK(client, nick) ":ft_irc 307 " + client + " " + nick + " :has identified for this nick" + IRC_ENDLINE
 # define RPL_WHOISUSER(client, nick, username, hostname, realname) ":ft_irc 311 " + client + " " + nick + " " + username + " " + hostname + " * :" + realname + IRC_ENDLINE
 # define RPL_WHOISSERVER(client, nick, servername, serverinfo) ":ft_irc 312 " + client + " " + nick + " " + servername + " :" + serverinfo + IRC_ENDLINE
+
 # define RPL_WHOISOPERATOR(client, nick) ":ft_irc 313 " + client + " " + nick + " :is an IRC operator" + IRC_ENDLINE
-# define RPL_WHOISIDLE(client, nick, secs, signon) ":ft_irc 317 " + client + " " + nick + " " + idle + " " + signon + " :seconds idle, signon time" + IRC_ENDLINE
+# define RPL_WHOISIDLE(client, nick, secs, signon) ":ft_irc 317 " + client + " " + nick + " " + secs + " " + signon + " :seconds idle, signon time" + IRC_ENDLINE
 # define RPL_WHOISCHANNELS(client, nick, channels) ":ft_irc 319 " + client + " " + nick + " :" + channels + IRC_ENDLINE
 # define RPL_WHOISSPECIAL(client, nick, especial) ":ft_irc 320 " + client + " " + nick + " :" + especial + IRC_ENDLINE
 # define RPL_WHOISACCOUNT(client, nick, account) ":ft_irc 330 " + client + " " + nick + " " + account + " :is logged in as" + IRC_ENDLINE
-# define RPL_WHOISACTUALLY(client, nick, user, host, server, ip, realname) ":ft_irc 338 " + client + " " + nick + " " + user + " " + host + " " + server + " " + ip + " :" + realname + IRC_ENDLINE
+// # define RPL_WHOISACTUALLY(client, nick, user, host, server, ip, realname) ":ft_irc 338 " + client + " " + nick + " " + user + " " + host + " " + server + " " + ip + " :" + realname + IRC_ENDLINE
 # define RPL_WHOISHOST(client, nick) ":ft_irc 378 " + client + " " + nick + " :is connecting from *@localhost 127.0.0.1" + IRC_ENDLINE
 # define RPL_WHOISMODES(client, nick, modes) ":ft_irc 379 " + client + " " + nick + " :is using modes " + modes + IRC_ENDLINE
 # define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
@@ -159,3 +160,9 @@
 # define RPL_KICK(client, channel, nick, comment) ":" + client + " KICK " + channel + " " + nick + " " + comment + IRC_ENDLINE
 
 # define RPL_NONE(client, message) ":ft_irc 300  "  + client + " :" + message + IRC_ENDLINE
+# define ERR_UNKNOWNERROR(client,  message) ":ft_irc 400 " + client + " :" + message + IRC_ENDLINE
+
+# define ERR_ERRONEUSNICKNAME(client, nick) ":ft_irc 432 " + client + " " + nick + " :Erroneus nickname" + IRC_ENDLINE
+# define ERR_NICKNAMEINUSE(client, nick) ":ft_irc 433 " + client + " " + nick + " :Nickname is already in use" + IRC_ENDLINE
+
+# define RPL_ENDOFWHOIS(client, nick) ":ft_irc 318 " + client + " " + nick + " :End of /WHOIS list" +  IRC_ENDLINE

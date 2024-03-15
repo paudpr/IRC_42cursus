@@ -6,14 +6,14 @@ void to_lower(std::string &str)
 		str[i] = std::tolower(str[i]);
 }
 
-std::string join_split(std::vector<std::string> array,  size_t start_pos)
+std::string join_split(std::vector<std::string> array,  size_t start_pos, std::string sep)
 {
 	std::string joined;
 	for (std::vector<std::string>::iterator iter  = array.begin() + start_pos; iter != array.end(); iter++)
 	{
 		joined += *iter;
 		if (iter != array.end() - 1)
-			joined += " ";
+			joined += sep;
 	}
 	return joined;
 }
@@ -34,11 +34,22 @@ std::string generate_token(void)
 }
 
 std::string get_time() {
-    std::time_t now = std::time(nullptr);
+    std::time_t now = std::time(NULL);
     std::tm* local_time = std::gmtime(&now);
     char buffer[80];
     std::strftime(buffer, sizeof(buffer), "%a %b %d %Y at %H:%M:%S UTC", local_time);
     return std::string(buffer);
+}
+
+std::string get_seconds(std::time_t init_time)
+{
+	std::time_t now = std::time(NULL);
+	double diff = std::difftime(now, init_time);
+
+	std::ostringstream oss;
+	oss << diff;
+	std::string seconds = oss.str();
+	return (seconds);
 }
 
 
@@ -74,7 +85,7 @@ std::vector<std::string> parse_join_args(std::string args)
 
 std::string unix_time(void)
 {
-	std::time_t now = std::time(nullptr);
+	std::time_t now = std::time(NULL);
 	std::string time = std::to_string(now);
 	return time;
 }

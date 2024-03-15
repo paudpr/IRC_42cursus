@@ -138,3 +138,28 @@ void	Client::leave_channel(Channel *channel)
 		}
 	}
 }
+
+bool  Client::is_operator_in(Channel *channel)
+{
+	std::vector<int> opers = channel->get_operators_fds();
+	for (std::vector<int>::iterator iter = opers.begin(); iter != opers.end(); iter++)
+	{
+		if (fd == *iter)
+			return true;
+	}
+	return false;
+}
+
+std::string Client::get_channel_names()
+{
+	std::vector<std::string> names;
+	for (std::vector<Channel *>::iterator iter = channels.begin(); iter != channels.end(); iter++)
+	{
+		std::string prefix = "";
+		if (is_operator_in((*iter)))
+			prefix = "@";
+		names.push_back(prefix + (*iter)->get_name());
+	}
+	std::string channel_names = join_split(names, 0, " ");
+	return channel_names;
+}

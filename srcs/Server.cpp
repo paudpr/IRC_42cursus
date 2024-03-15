@@ -102,7 +102,7 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	iter = fds_poll.begin();
 
 	Client	*client = new Client(fd_connection, connection_addr.sin_addr, this);
-	client->is_online = true;
+	client->is_online = false;
 	client->ping_request = true;
 	clients.push_back(client);
 	
@@ -160,6 +160,7 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
+	std::cout << "[Server] " << buffer << std::endl;
 	// std::cout << LIGHT_CYAN << buffer << RESET << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
@@ -311,6 +312,7 @@ void Server::save_commands()
 	commands.push_back(&Server::nick);
 	commands.push_back(&Server::user);
 	commands.push_back(&Server::quit);
+	commands.push_back(&Server::whois);
 	commands.push_back(&Server::ping);
 	commands.push_back(&Server::pong);
 	commands.push_back(&Server::lusers);

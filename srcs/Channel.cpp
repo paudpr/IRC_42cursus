@@ -367,3 +367,8 @@ std::string Channel::get_mode_string(void)
 		mode += "l";
 	return (mode);
 }
+
+std::vector<int> Channel::get_operators_fds() const
+{
+	return operators_fds;
+}

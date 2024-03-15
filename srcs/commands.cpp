@@ -26,7 +26,7 @@ void Server::pass(const int& fd, Message& message)
 {
 	Client*  client = *(get_client_byfd(fd));
 
-	if (check_valid_user(client, message))
+	if (client->mode &  VALID_CLIENT)
 		return send_message(fd, ERR_ALREADYREGISTERED(client->nickname));
 	if (message.args.empty())
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->nickname, "PASS"));
@@ -36,7 +36,7 @@ void Server::pass(const int& fd, Message& message)
 		client->pass_tries++;
 		if (client->pass_tries > 2)
 		{
-			send_message(fd, "[SERVER]: ERR_TOOMANYPASSTRIES\r\n");
+			send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "Too many password tries. Disconnecting now."));
 			std::vector<struct pollfd>::iterator iter;
 			for (iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
 			{
@@ -50,9 +50,9 @@ void Server::pass(const int& fd, Message& message)
 	}
 	client->is_online = true;
 	client->password = message.args[0];
-	std::cout << "[Server]: Client " << fd
+	std::cout << "[Server] Client " << fd
 		<< " from address " << client->hostname 
-		<< " now has access to this IRC Server" << std::endl;
+		<< " now has access to this IRC Server." << std::endl;
 
 }
 
@@ -76,24 +76,22 @@ void Server::nick(const int& fd, Message& message)
 {
 	std::vector<Client*>::iterator client = get_client_byfd(fd);
 	if ((*client)->is_online == false)
-		return  send_message(fd, "CLIENT not connected to server, can't change nick\r\n");
+		return  send_message(fd, ERR_UNKNOWNERROR((*client)->get_realname(), "Not connected to server"));
 	if (message.args.empty())
 		return send_message(fd, ERR_NONICKNAMEGIVEN((*client)->get_realname()));
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
-		|| message.args[0].find(" ,*?!@.") != std::string::npos)
-		return send_message(fd, "ERROR nick erróneo\r\n");
+		|| message.args[0].find_first_of(" ,*?!@._") != std::string::npos)
+		return send_message(fd, ERR_ERRONEUSNICKNAME((*client)->get_realname(), (*client)->nickname));
 	if (!check_availability(message.args[0], (*client)->nickname))
-		return send_message(fd, "ERROR nick ya en uso\r\n");
+		return send_message(fd, ERR_UNKNOWNERROR((*client)->get_realname(), "Nick already in use"));
 
 	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
 
-	//change nickname in all channels with necessary messages
 	std::string msg  = ":" + prev  + " NICK " + (*client)->nickname + "\r\n"; 
 	send_message(fd, RPL_CHANGENICK(prev, (*client)->nickname));
-	// std::cout  << ORANGE << "\t comprobar en nick" << RESET << std::endl;
 	check_valid_user(*client, message);
 }
 
@@ -101,7 +99,7 @@ void Server::user(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
 	if (client->is_online == false)
-		return  send_message(fd, "CLIENT not connected to server, can't change user\r\n");
+		return  send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "Not connected to server"));
 	if (message.args.size() < 4)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "USER"));
 	if (client->username.empty() == false)
@@ -109,11 +107,9 @@ void Server::user(const int& fd, Message& message)
 	client->username = message.args[0];
 	client->hostname = inet_ntoa(connection_addr.sin_addr);
 	if (message.args.size() >= 4)
-		client->realname = join_split(message.args, 3);
+		client->realname = join_split(message.args, 3, " ");
 	if (client->realname[0] == ':')
 		client->realname.erase(0, 1);
-	// std::cout  << ORANGE << "\t comprobar en user" << RESET << std::endl;
-	// std::cout << "-" << client->username << "-" << client->realname << "-" << client->hostname << "-" << std::endl;
 	check_valid_user(client, message);
 }
 
@@ -133,13 +129,6 @@ void Server::lusers(const int& fd, Message& message)
 
 void Server::send_welcome(Client *client, Message &message)
 {
-	// (void)  client;
-	// std::cout << PINK << "enviar mensajes de  ahberse  podido conectar. solo pasa una vez" << std::endl;
-	// std::cout << "[001] " << std::endl;
-	// std::cout << "[002]" << std::endl;
-	// std::cout << "[003]" << std::endl;
-	// std::cout << "[004]" << RESET << std::endl;
-
 	send_message(client->fd, RPL_WELCOME(client->nickname, client->username, client->hostname));
 	send_message(client->fd, RPL_YOURHOST(client->nickname, client->hostname, "1.0"));
 	send_message(client->fd, RPL_CREATED(client->nickname, get_time()));
@@ -147,7 +136,6 @@ void Server::send_welcome(Client *client, Message &message)
 	send_message(client->fd, RPL_ISUPPORT(client->nickname));
 	Server::lusers(client->fd, message);
 	Server::motd(client->fd, message);
-	//no  son prints, con enviar mensajes, pero lo que sea
 }
 
 void Server::motd(const int& fd, Message& message)
@@ -166,36 +154,43 @@ bool Server::check_valid_user(Client *client, Message& message)
 		return false;
 	if (!client->password.empty() && !client->nickname.empty() && !client->username.empty() && !(client->mode & VALID_CLIENT))
 	{
-		// std::cout << "PRUEBA2" << std::endl;
 		client->mode |= VALID_CLIENT;
 		client->ping_request = false;
 		send_welcome(client, message);
 	}
-	// std::cout << "PRUEBA 3" << std::endl;
 	return true;
 }
 
-//TODO: Replies
 void Server::whois(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
-	if (message.args.size() < 1)
-		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "WHOIS"));
-	std::string nick = message.args[0];
-	Client *whois = get_client_by_nickname(nick);
+	if (message.args.size() < 1 || (message.args.size() == 1 && message.args[0]  == ":"))
+		return send_message(fd, ERR_NONICKNAMEGIVEN(client->get_realname()));
+	Client *whois = get_client_by_nickname(message.args[0]);
 	if (whois == NULL)
-		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), nick));
-	
-	std::cout << "Command WOHIS" << std::endl;
+		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), message.args[0]));
+	send_message(fd, RPL_WHOISREGNICK(client->get_realname(), whois->nickname));
+	send_message(fd, RPL_WHOISUSER(client->get_realname(), whois->nickname, whois->username, whois->hostname, whois->realname));
+	send_message(fd, RPL_WHOISSERVER(client->get_realname(), whois->nickname, "ft_irc", "This is a IRC server developed for 42_cursus"));
+	//solucionar problema fecha
+	send_message(fd, RPL_WHOISIDLE(client->get_realname(), whois->nickname, get_seconds(whois->time_now), get_seconds(whois->time_init)));
+
+	//check if client is operator and then send
+	// send_message(fd, RPL_WHOISOPERATOR(client->get_realname(), whois->nickname));
+	// send_message(fd, RPL_WHOISMODES(client->get_realname(), whois->nickname, whois->get_modes()));
+
+	send_message(fd, RPL_WHOISCHANNELS(client->get_realname(), whois->nickname, whois->get_channel_names()));
+
+	std::string end = join_split(message.args, 0, ", ");
+	send_message(fd, RPL_AWAY(client->get_realname(), whois->nickname, "I'm away!"));
+	send_message(fd, RPL_ENDOFWHOIS(client->get_realname(), end));
+
 }
 
 void Server::quit(const int& fd, Message& message)
 {
-
-	//no está entrando aqui para 
-	std::string msg = join_split(message.args, 0);
+	std::string msg = join_split(message.args, 0, " ");
 	msg = "QUIT: " + msg;
-	// std::cout << YELLOW << msg << RESET << std::endl;
 	send_message(fd, msg);
 
 	std::vector<pollfd>::iterator iter;
@@ -204,9 +199,13 @@ void Server::quit(const int& fd, Message& message)
 		if (iter->fd == fd)
 			break ;
 	}
+	//abandonar channel y notificar a usuarios en el canal
+
+
+
+	
 	if (iter  != fds_poll.end())
 		remove_client(iter);
-	//abandonar channel y notificar a usuarios en el canal
 
 
 }
@@ -216,7 +215,7 @@ void Server::ping(const int& fd, Message& message)
 	Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "PING"));
-	std::string arg = join_split(message.args, 0);
+	std::string arg = join_split(message.args, 0, " ");
 	send_message(fd, "PONG: " + arg);
 }
 
@@ -234,7 +233,7 @@ void Server::pong(const int& fd, Message& message)
 		client->time_now = std::time(NULL);
 	}
 	else
-		send_message(fd, RPL_NONE(client->get_realname(), "Token not valid"));
+		send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "Token not valid"));
 }
 
 /*
@@ -251,7 +250,7 @@ void	Server::join(const int& fd, Message& message)
 	Client *client = *(get_client_byfd(fd));
 	std::string channel_name;
 	std::string password;
-	std::string args = join_split(message.args, 0);
+	std::string args = join_split(message.args, 0, " ");
 	std::vector<std::string> args_split = split(args, ' ');
 	std::vector<std::string> channel_list;
 	std::vector<std::string> pass_list;
@@ -344,18 +343,18 @@ void	Server::privmsg(const int& fd, Message& message)
 	if (message.args.size() == 1)
 		return send_message(fd, ERR_NOTEXTTOSEND(client->get_realname()));
 
-	args = join_split(message.args, 0);
+	args = join_split(message.args, 0, " ");
 	targets = split(args, ',');
 	last_args = split(targets.back(), ' ');
 	if (last_args.size() > 1)
-		msg = join_split(last_args, 1);
+		msg = join_split(last_args, 1, " ");
 	else
 		msg = "";
 	if (msg.empty())
 		return ;
 	targets.pop_back();
 	targets.push_back(last_args[0]);
-	std::cout << join_split(targets, 0) << std::endl;
+	std::cout << join_split(targets, 0, " ") << std::endl;
 	for (iter = targets.begin(); iter != targets.end(); ++iter)
 	{
 		target = *iter;
@@ -410,11 +409,11 @@ void	Server::part(const int& fd, Message& message)
 	if (message.args.size() < 1)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "PART"));
 
-	args = join_split(message.args, 0);
+	args = join_split(message.args, 0, " ");
 	channels_names = split(args, ',');
 	last_args = split(channels_names.back(), ' ');
 	if (last_args.size() > 1)
-		message_part = join_split(last_args, 1);
+		message_part = join_split(last_args, 1, " ");
 	else
 		message_part = "";
 	channels_names.pop_back();
@@ -470,7 +469,7 @@ void	Server::topic(const int& fd, Message& message)
 	if (message.args.size() < 2 || message.args[1] == ":")
 		return send_message(fd, RPL_TOPIC(client->get_realname(), channel->get_name(), channel->get_topic()));
 
-	std::string topic = join_split(message.args, 1);
+	std::string topic = join_split(message.args, 1, " ");
 	if (topic.length() > 0 && topic[0] == ':')
 		topic.erase(0, 1);
 	if (client->is_in_channel(channel->get_name()) == false)
@@ -557,7 +556,7 @@ void	Server::kick(const int& fd, Message& message)
 	Channel *channel;
 	std::vector<Channel *>::iterator channel_it;
 
-	std::string args = join_split(message.args, 0);
+	std::string args = join_split(message.args, 0, " ");
 	std::vector<std::string> args_split = split(args, ' ');
 
 	if (args_split.size() < 2)
@@ -566,7 +565,7 @@ void	Server::kick(const int& fd, Message& message)
 	channel_name = args_split[0];
 	users = split(args_split[1], ',');
 	if (args_split.size() > 2)
-		comment = join_split(args_split, 2);
+		comment = join_split(args_split, 2, " ");
 	else
 		comment = "";
 	channel_it = get_channel_by_name(channel_name);
@@ -610,7 +609,7 @@ void	Server::list(const int& fd, Message& message)
 	send_message(fd, RPL_LISTSTART(client->get_realname()));
 	if (message.args.size() > 0)
 	{
-		channel_join = join_split(message.args, 0);
+		channel_join = join_split(message.args, 0, " ");
 		channel_list = split(channel_join, ',');
 		for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
 			if (find_channel(*iter))
@@ -638,7 +637,7 @@ void	Server::names(const int& fd, Message& message)
 	std::vector<std::string>::iterator iter;
 	std::vector<Channel *>::iterator channel_it;
 
-	args = join_split(message.args, 0);
+	args = join_split(message.args, 0, " ");
 	channels_names = split(args, ',');
 	if (channels_names.size() == 0)
 		channel_list = channels;
