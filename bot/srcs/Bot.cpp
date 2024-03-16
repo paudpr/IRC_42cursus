@@ -1,5 +1,7 @@
 #include "Bot.hpp"
 
+std::string Bot::weatherAPI = "17fb67835ec90850c2273db05881734e";
+
 Bot::Bot(void)
 	: _nick(""), _channel_password(""), _port("")
 {

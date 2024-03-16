@@ -24,7 +24,7 @@ int	main(int ac, char **av)
 		bot.connectToServer();
 		bot.run();
 	} catch (std::exception &e) {
-		std::cout << e.what() << " - " << strerror(errno) << std::endl;
+		std::cout << BIRed << e.what() << " - " << strerror(errno) << Color_Off << std::endl;
 	}
 	return (0);
 }

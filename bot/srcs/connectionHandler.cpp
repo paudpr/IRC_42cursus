@@ -29,15 +29,40 @@ void	Bot::initializeSocket(void)
 
 void	Bot::connectToServer(void)
 {
-	while (connect(_socket, servinfo->ai_addr, servinfo->ai_addrlen) != 0)
-	{
-		std::cout << "Trying to connect to " << getServerAddress() << " on port " << getPort() << std::endl;
-		std::cout << "Retrying in 5 seconds" << std::endl;
-		sleep(5);
-	}
+	if (connect(_socket, servinfo->ai_addr, servinfo->ai_addrlen) != 0)
+		throw std::runtime_error("[ ERROR ] Connect failed");
 }
 
 int	Bot::checkPoll(void)
 {
 	return (poll(&fd_poll, 1, POLL_TIMEOUT_MS));
+}
+
+int	Bot::connectToWeatherAPI(void)
+{
+	std::string hostname = "api.openweathermap.org";
+	int	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0)
+	{
+		perror("socket");
+		return (-1);
+	}
+	struct hostent *server = gethostbyname(hostname.c_str());
+	if (server == NULL)
+	{
+		perror("gethostbyname");
+		return (-1);
+	}
+	struct sockaddr_in server_addr;
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	memcpy(&server_addr.sin_addr.s_addr, server->h_addr, server->h_length);
+	server_addr.sin_port = htons(80);
+
+	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+	{
+		perror("connect");
+		return (-1);
+	}
+	return (sockfd);
 }

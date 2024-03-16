@@ -16,7 +16,13 @@ class Bot
 		struct pollfd				fd_poll;
 		struct addrinfo				*servinfo;
 		std::vector<std::string>	channels;
-		void						parseWeather(std::string channel, std::string json);
+
+		// Weather
+		static std::string			weatherAPI;
+		std::vector<std::string>	parseWeather(std::string json);
+		int							connectToWeatherAPI(void);
+		bool						sendHTTPRequest(int sockfd, std::string request);
+		std::string					receiveHTTPRequest(int sockfd);
 	public:
 		// Orthodox canonical class
 		Bot(void);

@@ -14,7 +14,6 @@
 # include <sys/socket.h>
 # include <stdio.h>
 #include <sys/errno.h>
-#include <curl/curl.h>
 
 # include <string>
 # include <map>
@@ -32,6 +31,7 @@
 #include "irc_format.hpp"
 
 # define POLL_TIMEOUT_MS 3000
+# define BANNER	""
 
 // Replies
 
