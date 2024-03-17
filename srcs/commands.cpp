@@ -82,10 +82,10 @@ void Server::nick(const int& fd, Message& message)
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
-		|| message.args[0].find_first_of(" ,*?!@._") != std::string::npos)
-		return send_message(fd, ERR_ERRONEUSNICKNAME((*client)->get_realname(), (*client)->nickname));
+		|| message.args[0].find(" ,*?!@.") != std::string::npos)
+		return send_message(fd, ERR_ERRONEUSNICKNAME((*client)->get_realname(), message.args[0]));
 	if (!check_availability(message.args[0], (*client)->nickname))
-		return send_message(fd, ERR_UNKNOWNERROR((*client)->get_realname(), "Nick already in use"));
+		return send_message(fd, ERR_NICKNAMEINUSE((*client)->get_realname(), message.args[0]));
 
 	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
@@ -550,6 +550,7 @@ void	Server::invite(const int& fd, Message& message)
 *		- Si el que usa el comando no esta en el canal, se notifica.	
 */
 //?Testear
+//TODO: eliminar al usuario del vector
 void	Server::kick(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
