@@ -193,21 +193,27 @@ void Server::quit(const int& fd, Message& message)
 	msg = "QUIT: " + msg;
 	send_message(fd, msg);
 
+	Client *client = *get_client_byfd(fd);
+	std::vector<Channel *>::iterator it  = client->channels.begin();
+	while (it != client->channels.end())
+	{
+		std::string msg = client->nickname + " has left " + (*it)->get_name() + IRC_ENDLINE; 
+		client->leave_channel(*it);
+		(*it)->broadcast_message(RPL_PART(client->get_realname(), (*it)->get_name(), msg));
+		(*it)->remove_client(client);
+		(*it)->decrease_clients();
+		if ((*it)->get_current_clients() == 0)
+			remove_channel(*it);
+		it = client->channels.begin();
+	}
+
 	std::vector<pollfd>::iterator iter;
 	for (iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
 	{
 		if (iter->fd == fd)
 			break ;
 	}
-	//abandonar channel y notificar a usuarios en el canal
-
-
-
-	
-	if (iter  != fds_poll.end())
-		remove_client(iter);
-
-
+	remove_client(iter);
 }
 
 void Server::ping(const int& fd, Message& message)
@@ -221,7 +227,6 @@ void Server::ping(const int& fd, Message& message)
 
 void Server::pong(const int& fd, Message& message)
 {
-	std::cout << ORANGE <<  "POOOOOOONNNNNGGGGGGG" << RESET << std::endl; 
 	Client *client = *(get_client_byfd(fd));
 	if (message.args.size() < 1)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "PONG"));
@@ -233,7 +238,7 @@ void Server::pong(const int& fd, Message& message)
 		client->time_now = std::time(NULL);
 	}
 	else
-		send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "Token not valid"));
+		send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "Token not valid\n"));
 }
 
 /*

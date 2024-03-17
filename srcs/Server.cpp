@@ -160,7 +160,7 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
-	std::cout << "[Server] " << buffer << std::endl;
+	std::cout << "[Server] " << buffer << RESET << std::endl;
 	// std::cout << LIGHT_CYAN << buffer << RESET << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
