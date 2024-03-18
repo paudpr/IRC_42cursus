@@ -617,10 +617,13 @@ void	Server::list(const int& fd, Message& message)
 	{
 		channel_join = join_split(message.args, 0, " ");
 		channel_list = split(channel_join, ',');
-		for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
-			if (find_channel(*iter))
-				channels_to_list.push_back(*get_channel_by_name(*iter));
 	}
+	else
+		for (std::vector<Channel *>::iterator iter = channels.begin(); iter != channels.end(); ++iter)
+			channel_list.push_back((*iter)->get_name());
+	for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
+		if (find_channel(*iter))
+			channels_to_list.push_back(*get_channel_by_name(*iter));
 	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
 		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
 	if (channels_to_list.empty())
