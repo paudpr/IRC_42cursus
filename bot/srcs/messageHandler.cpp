@@ -238,10 +238,6 @@ std::vector<std::string>	Bot::parseWeather(std::string json)
 	temp = std::to_string(int(round((std::stof(temp) - 273.15) * 100) / 100));
 	temp_max = std::to_string(int(round((std::stof(temp_max) - 273.15) * 100) / 100));
 	temp_min = std::to_string(int(round((std::stof(temp_min) - 273.15) * 100) / 100));
-	// sendPrivmsg(channel, "Temperature - " + temp + "°C");
-	// sendPrivmsg(channel, "Max - " + temp_max + "°C");
-	// sendPrivmsg(channel, "Min - " + temp_min + "°C");
-	// sendPrivmsg(channel, "Description - " + description);
 	result.push_back("Temperature - " + temp + "°C");
 	result.push_back("Max - " + temp_max + "°C");
 	result.push_back("Min - " + temp_min + "°C");
@@ -278,6 +274,6 @@ std::string	Bot::receiveHTTPRequest(int sockfd)
 		close(sockfd);
 		return ("");
 	}
-	response = std::string(buffer, bytes); // asigna el contenido del buffer a response
+	response = std::string(buffer, bytes);
 	return (response);
 }
