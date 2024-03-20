@@ -40,8 +40,14 @@ bool Server::check_args(char *argv_port, char *argv_pass)
 	return true;
 }
 
+void	showLeaks()
+{
+	system("leaks ircserv");
+}
+
 int		main(int argc, char** argv) {
 
+	atexit(showLeaks);
 	if (argc != 3)
 	{
 		std::cout << "[ ERROR ] Invalid arguments. Must follow this structure: \n" 

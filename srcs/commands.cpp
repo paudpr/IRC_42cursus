@@ -201,7 +201,6 @@ void Server::quit(const int& fd, Message& message)
 		client->leave_channel(*it);
 		(*it)->broadcast_message(RPL_PART(client->get_realname(), (*it)->get_name(), msg));
 		(*it)->remove_client(client);
-		(*it)->decrease_clients();
 		if ((*it)->get_current_clients() == 0)
 			remove_channel(*it);
 		it = client->channels.begin();
@@ -317,7 +316,7 @@ void	Server::mode(const int& fd, Message& message)
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
 	if (is_valid_mode(args[1], client) == false)
 		return;
-	modes_change = channel->handle_mode(args);
+	modes_change = channel->check_modes(args, client);
 	if (modes_change.length() > 2)
 		channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, modes_change));
 }
@@ -439,7 +438,6 @@ void	Server::part(const int& fd, Message& message)
 		client->leave_channel(channel);
 		channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name(), message_part));
 		channel->remove_client(client);
-		channel->decrease_clients();
 		if (channel->get_current_clients() == 0)
 			remove_channel(channel);
 		std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
@@ -655,6 +653,8 @@ void	Server::names(const int& fd, Message& message)
 			if (find_channel(*iter))
 				channel_list.push_back(*get_channel_by_name(*iter));
 	for(channel_it = channel_list.begin(); channel_it != channel_list.end(); channel_it++)
+	{
 		send_message(fd, RPL_NAMREPLY(client->get_realname(), (*channel_it)->get_name(), (*channel_it)->get_list_of_clients(client)));
-	send_message(fd, RPL_ENDOFNAMES(client->get_realname(), ""));
+		send_message(fd, RPL_ENDOFNAMES(client->get_realname(), (*channel_it)->get_name()));
+	}
 }
