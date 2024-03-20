@@ -82,7 +82,7 @@ void Server::nick(const int& fd, Message& message)
 	if (message.args.size() > 1 
 		|| message.args[0][0] == '$' || message.args[0][0] == ':'
 		|| message.args[0][0] == '&' || message.args[0][0] == '#'
-		|| message.args[0].find(" ,*?!@.") != std::string::npos)
+		|| message.args[0].find_first_of(" ,*?!@._") != std::string::npos)
 		return send_message(fd, ERR_ERRONEUSNICKNAME((*client)->get_realname(), message.args[0]));
 	if (!check_availability(message.args[0], (*client)->nickname))
 		return send_message(fd, ERR_NICKNAMEINUSE((*client)->get_realname(), message.args[0]));
@@ -661,6 +661,8 @@ void	Server::oper(const int& fd, Message& message)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), message.cmd));
 	if (client->is_oper == true)
 		return send_message(fd, RPL_YOUREOPER(client->get_realname(), "You are already an IRC operator"));
+	if (client->nickname  != message.args[0])
+		return send_message(fd, ERR_PASSWDMISMATCH(client->get_realname()));
 	for (std::vector<std::pair<std::string, std::string> >::iterator iter = possible_opers.begin(); iter != possible_opers.end(); iter++)
 	{
 		if (iter->first == message.args[0] && iter->second == message.args[1])
