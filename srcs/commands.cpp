@@ -191,18 +191,16 @@ void Server::quit(const int& fd, Message& message)
 
 	Client *client = *get_client_byfd(fd);
 	std::vector<Channel *>::iterator it  = client->channels.begin();
+	
 	while (it != client->channels.end())
 	{
 		std::string msg = client->nickname + " has left " + (*it)->get_name() + IRC_ENDLINE; 
-		client->leave_channel(*it);
-		(*it)->broadcast_message(RPL_PART(client->get_realname(), (*it)->get_name(), msg));
+		client->leave_channel(*it);	//elimina el canal de la lista del  cliente
+		(*it)->broadcast_message(RPL_PART(client->get_realname(), (*it)->get_name(), msg));	//envia mensaje a todos  en canal
 		(*it)->remove_client(client);
 		(*it)->decrease_clients();
-		if ((*it)->get_current_clients() == 0)
-			remove_channel(*it);
 		it = client->channels.begin();
 	}
-
 	std::vector<pollfd>::iterator iter;
 	for (iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
 	{
