@@ -252,7 +252,7 @@ void	Server::start()
 		}
 		// check_ping();
 	}
-	std::cout << BLUE << "Ending server. Bye!" << std::endl;
+	std::cout << BLUE << "Ending server. Bye!" << RESET << std::endl;
 }
 
 std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
