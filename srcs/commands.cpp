@@ -592,6 +592,8 @@ void	Server::kick(const int& fd, Message& message)
 		channel->remove_client(kicked);
 		kicked->leave_channel(channel);
 	}
+	if (channel->get_current_clients() == 0)
+		remove_channel(channel);
 }
 
 /*
