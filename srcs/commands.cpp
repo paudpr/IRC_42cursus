@@ -120,7 +120,7 @@ void Server::lusers(const int& fd, Message& message)
 	Client *client = *(get_client_byfd(fd));
 	send_message(fd, RPL_LUSERCLIENT(client->nickname, int_to_string(client->server->clients.size())));
 	send_message(fd, RPL_LUSEROP(client->nickname, int_to_string((get_operators_server()))));	//arreglar numero cuando tenga operadores
-	send_message(fd, RPL_LUSERUNKNOWN(client->nickname, int_to_string(client->server->clients.size()-client->server->fds_poll.size())));
+	send_message(fd, RPL_LUSERUNKNOWN(client->nickname, int_to_string(get_unknown_server())));
 	send_message(fd, RPL_LUSERCHANNELS(client->nickname, int_to_string(client->server->channels.size())));
 	send_message(fd, RPL_LUSERME(client->nickname, int_to_string(client->server->clients.size()), "1"));
 	send_message(fd, RPL_lOCALUSERS(client->nickname, int_to_string(client->server->clients.size()), "1")); //Tercer argumento es el maximo de clientes conectados
@@ -699,4 +699,30 @@ void	Server::kill(const int& fd, Message& message)
 	send_message(killed->fd, ":" + client->get_realname() + " ERROR " + ":" + target + IRC_ENDLINE);
 	Server::quit(killed->fd, msg);
 
+}
+
+void Server::shutdown(const int& fd, Message& message)
+{
+
+	(void)fd;
+	(void)message;
+	Client *client = *get_client_byfd(fd);
+	if (client->is_oper == false)
+		return send_message(fd, ERR_NOPRIVILEGES(client->get_realname()));
+	for (std::vector<Client*>::iterator iter = clients.begin();  iter  != clients.end(); iter++)
+	{
+		if (*iter != client)
+		{
+			Message  msg;
+			msg.cmd = "KILL";
+			msg.args = split("Shutting down now...", ' ');
+			msg.args.insert(msg.args.begin(), (*iter)->nickname);
+			msg.message = msg.cmd + " " + join_split(msg.args, 0, " ");
+			Server::kill((*iter)->fd, msg);
+		}
+	}
+	Message msg;
+	msg.cmd = "QUIT";
+	Server::quit(client->fd, msg);
+	online = false;
 }

@@ -6,11 +6,13 @@ Server::Server() : online(true)
 	save_opers();
 }
 
-Server::~Server() {
+Server::~Server() 
+{
 	for (std::vector<pollfd>::iterator iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
 		if (iter->fd != server_fd)
 			close(iter->fd);
 	close(server_fd);
+	online = false;
 }
 Server::Server(const Server& copy)
 {
@@ -277,6 +279,7 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "NAMES") return std::find(commands.begin(), commands.end(),  &Server::names);
 	if (name == "OPER") return std::find(commands.begin(), commands.end(),  &Server::oper);
 	if (name == "KILL") return std::find(commands.begin(), commands.end(),  &Server::kill);
+	if (name == "SHUTDOWN") return std::find(commands.begin(), commands.end(),  &Server::shutdown);
 	return (commands.end());
 }
 
@@ -302,6 +305,7 @@ void Server::save_commands()
 	commands.push_back(&Server::names);
 	commands.push_back(&Server::oper);
 	commands.push_back(&Server::kill);
+	commands.push_back(&Server::shutdown);
 }
 
 void Server::save_opers()
@@ -473,13 +477,24 @@ void	Server::remove_channel(Channel *channel)
 
 int Server::get_operators_server(void)
 {
-	// int num;
+	int num = 0;
 
-	// for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
-	// {
-		
-	// }
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->is_oper == true)
+			num++;
+	}
+	return num;
+}
 
-	std::cout << YELLOW << "get operators server" << RESET << std::endl;
-	return 0;
+
+int Server::get_unknown_server(void)
+{
+	int num = 0;
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	{
+		if ((*iter)->mode & VALID_CLIENT)
+			num++;
+	}
+	return (fds_poll.size() - num - 1);
 }

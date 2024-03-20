@@ -50,6 +50,7 @@ class Server {
 		void names(const int& fd, Message& message);
 		void oper(const int& fd, Message& message);
 		void kill(const int& fd, Message& message);
+		void shutdown(const int& fd, Message& message);
 		// void close(const int& fd, Message& message); //disconnects all unkown connections (clientes  que no  se han registrado)
 
 		//utils commands
@@ -119,5 +120,6 @@ class Server {
 		void							remove_channel(Channel *channel);
 
 		int get_operators_server(void);
+		int get_unknown_server(void);
 
 };
