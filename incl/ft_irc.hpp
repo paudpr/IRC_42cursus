@@ -42,6 +42,9 @@
 
 # define VALID_CLIENT 0b1000
 
+# define OPER_NICK "admin"
+# define OPER_PASS "admin$1234"
+
 
 # define RESET "\033[0m"
 # define GREY "\033[90m"

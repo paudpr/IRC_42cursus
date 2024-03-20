@@ -16,8 +16,8 @@
 
 // LUSER
 # define RPL_LUSERCLIENT(client, num) ":ft_irc 251 " + client + " :There are " + num + " users and 0 services on 1 servers" + IRC_ENDLINE
-# define RPL_LUSEROP(client, num ) ":ft_irc 252 " + client + " " + num + " :operator(s) online" + IRC_ENDLINE
-# define RPL_LUSERUNKNOWN(client) ":ft_irc 253 " + client + " 0 :unknown connection(s)" + IRC_ENDLINE
+# define RPL_LUSEROP(client, num ) ":ft_irc 252 " + client + " " + num + " : clients with operator privileges online" + IRC_ENDLINE
+# define RPL_LUSERUNKNOWN(client, num) ":ft_irc 253 " + client + " " + num + " :unknown connection(s)" + IRC_ENDLINE
 # define RPL_LUSERCHANNELS(client, num) ":ft_irc 254 " + client + " " + num + " :channels formed" + IRC_ENDLINE
 # define RPL_LUSERME(client, num, num2) ":ft_irc 255 " + client + " :I have " + num + " client(s) and " + num2 + " server(s)" + IRC_ENDLINE
 # define RPL_lOCALUSERS(client, num, max) ":ft_irc 265 " + client + " :Current local users: " + num + ", max: " + max + IRC_ENDLINE
@@ -173,3 +173,9 @@
 # define ERR_NICKNAMEINUSE(client, nick) ":ft_irc 433 " + client + " " + nick + " :Nickname is already in use" + IRC_ENDLINE
 
 # define RPL_ENDOFWHOIS(client, nick) ":ft_irc 318 " + client + " " + nick + " :End of /WHOIS list" +  IRC_ENDLINE
+
+# define ERR_UNKNOWNCOMMAND(client, command) ":ft_irc 421 " + client + " " + command + " :Unknown command" +  IRC_ENDLINE
+
+# define RPL_YOUREOPER(client, message) ":ft_irc 381 " + client + " :" + message +  IRC_ENDLINE
+
+# define ERR_NOPRIVILEGES(client) ":ft_irc 481 " +  client + ":Permission Denied- You're not an IRC operator" + IRC_ENDLINE

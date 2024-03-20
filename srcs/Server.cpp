@@ -3,6 +3,7 @@
 Server::Server() : online(true)
 {
 	save_commands();
+	save_opers();
 }
 
 Server::~Server() {
@@ -82,16 +83,16 @@ void	Server::init()
 	}
 }
 
-void	Server::add_client(std::vector<pollfd>::iterator &iter) {
+void	Server::add_client(std::vector<pollfd>::iterator &iter)
+{
 	int							fd_connection;
 	struct pollfd				poll_connection;
 
 	fd_connection = accept(iter->fd, (sockaddr*)&connection_addr, &connection_size);
 	if (fd_connection < 0)
-		throw std::runtime_error("[ ERROR ] Accept failed");	// cambiar a mensaje de error?
+		throw std::runtime_error("[ ERROR ] Accept failed");
 	if (clients.size() >= BACKLOG || fds_poll.size() >= BACKLOG + 1)
 	{
-		// send_msg( "Too many clients connected already"); // enviar mensaje al cliente de que no se puede conectar
 		std::cout <<  "[ ERROR ] Too many client connections" << std::endl;
 		close(fd_connection);
 	}
@@ -108,8 +109,6 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter) {
 	
 	std::cout << CYAN << "[Server]: Client " << fd_connection << " from " << inet_ntoa(connection_addr.sin_addr)
 		<< ":" << ntohs(connection_addr.sin_port) << " connected." << RESET << std::endl;
-
-	// send_message(fd_connection, "Now connected to esteproyectoponlocomosea\r\n");
 }
 
 void	Server::remove_client(std::vector<pollfd>::iterator &iter)
@@ -148,11 +147,11 @@ std::vector<Client*>::iterator Server::get_client_byfd(int fd)
 
 void Server::do_communications(std::vector<pollfd>::iterator &iter)
 {
-	char buffer[BUFFER]; // [BUFFER + 1] ???????
+	char buffer[BUFFER + 1];
 	bzero(&buffer, sizeof(buffer));
 	int read_bytes;
 
-	std::vector<Client*>::iterator client = get_client_byfd(iter->fd);	//version sentido comun
+	std::vector<Client*>::iterator client = get_client_byfd(iter->fd);
 	if ((*client)->mode & VALID_CLIENT)
 	{
 		(*client)->time_now = std::time(NULL);
@@ -161,43 +160,45 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
 	std::cout << "[Server] " << buffer << RESET << std::endl;
-	// std::cout << LIGHT_CYAN << buffer << RESET << std::endl;
 	msg.clear();
 	if (read_bytes <= 0)
 	{
-		// cambiar a ejecutar comando QUIT ?????
 		remove_client(iter);
 		return ;
 	}
 
-	msg = (*client)->receive_leftovers;
-	msg.append(buffer);
-	size_t pos = msg.find('\n');
-	if (pos != std::string::npos)
-		(*client)->receive_leftovers.clear();
-	
-	std::vector<std::string> split = split_msg();
-	for (std::vector<std::string>::iterator it = split.begin(); it != split.end(); it++)
+	buffer[read_bytes] = '\0';
+	(*client)->receive_leftovers += buffer;
+	size_t pos = (*client)->receive_leftovers.find('\n');
+	while (pos != std::string::npos)
 	{
-		Message message(*it);
-		std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
-		if (cmd != commands.end())
-		{
+		msg = (*client)->receive_leftovers.substr(0, pos);
+		(*client)->receive_leftovers = (*client)->receive_leftovers.substr(pos + 1);
 
-			// std::cout << PINK << message.message << RESET << std::endl;
-			// std::cout  << static_cast<int>(check_valid_user(*client)) <<  std::endl;
-			if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
-				|| (*client)->mode & VALID_CLIENT)
-				(this->*(*cmd))((*client)->fd, message);
-			else
-				send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
+		std::vector<std::string> split = split_msg();
+		for (std::vector<std::string>::iterator it = split.begin(); it != split.end(); it++)
+		{
+			Message message(*it);
+			std::vector<Server::ptr>::iterator cmd = get_command(message.cmd); 
+			if (cmd != commands.end())
+			{
+				if (message.cmd == "PASS" || message.cmd == "QUIT" || message.cmd == "USER" || message.cmd == "NICK" 
+					|| (*client)->mode & VALID_CLIENT)
+					(this->*(*cmd))((*client)->fd, message);
+				else
+					send_message((*client)->fd, get_time() + (*client)->nickname + " :Not connected to server\r\n");
+			}
+			else if (!message.cmd.empty())
+				send_message((*client)->fd, ERR_UNKNOWNCOMMAND((*client)->get_realname(), message.cmd));
 		}
+		pos = (*client)->receive_leftovers.find('\n');
 	}
+	
 }
 
 std::vector<std::string> Server::split_msg(void)
 {
-	std::stringstream stream(msg);
+	std::stringstream stream(this->msg);
 	std::string str;
 	std::vector<std::string> split;
 
@@ -244,11 +245,7 @@ void	Server::start()
 			else if (iter->revents & POLLOUT) //filedescritor is ready for writing
 			{
 				if (!(*(get_client_byfd(iter->fd)))->send_leftovers.empty())
-				{
-					std::cout << "gestionar restos" << std::endl;
-					// send_message(iter->fd, (*(get_client_byfd(iter->fd))).send_leftovers);
 					(*(get_client_byfd(iter->fd)))->send_leftovers.clear();
-				}
 			}
 			else if (iter->revents & POLLHUP)
 				remove_client(iter);
@@ -257,31 +254,6 @@ void	Server::start()
 	}
 	std::cout << BLUE << "Ending server. Bye!" << std::endl;
 }
-
-// not necessary for colloquy client
-// void Server::check_ping()
-// {
-// 	for (std::vector<pollfd>::iterator iter = fds_poll.begin(); iter != fds_poll.end(); iter++)
-// 	{
-// 		if (iter->fd != server_fd)
-// 		{
-// 			Client  *client = *(get_client_byfd(iter->fd));
-// 			if (client->ping_request && std::time(NULL) - client->time_init > PING_TIMEOUT)
-// 			{
-// 				send_message(client->fd, "[ ERROR ] Timeout");
-// 				remove_client(iter);
-// 			}
-// 			else if (client->ping_request == false && std::time(NULL) - client->time_now > PING_FREQ)
-// 			{
-// 				std::cout << "está entrando aqui" << std::endl;
-// 				client->ping_request = true;
-// 				client->ping_token = generate_token();
-// 				client->time_now = std::time(NULL);
-// 				send_message(client->fd, "PING: " + client->ping_token);
-// 			}
-// 		}
-// 	}
-// }
 
 std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 {
@@ -303,6 +275,8 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
 	if (name == "LIST") return std::find(commands.begin(), commands.end(),  &Server::list);
 	if (name == "NAMES") return std::find(commands.begin(), commands.end(),  &Server::names);
+	if (name == "OPER") return std::find(commands.begin(), commands.end(),  &Server::oper);
+	if (name == "KILL") return std::find(commands.begin(), commands.end(),  &Server::kill);
 	return (commands.end());
 }
 
@@ -326,6 +300,16 @@ void Server::save_commands()
 	commands.push_back(&Server::kick);
 	commands.push_back(&Server::list);
 	commands.push_back(&Server::names);
+	commands.push_back(&Server::oper);
+	commands.push_back(&Server::kill);
+}
+
+void Server::save_opers()
+{
+	//ahora hardcoded a macros
+	//leer de archivo de configuración lista de usuario y contraseñas y  guardas
+	//comprobar que nicks no estén repetidos -> tirar error de archivo config
+	possible_opers.push_back(std::make_pair(OPER_NICK, OPER_PASS));
 }
 
 void Server::send_message(const int &fd, std::string message)
@@ -484,4 +468,18 @@ void	Server::remove_channel(Channel *channel)
 	else 
 		std::cout << "There was a problem, channel not found" << std::endl; 
 	delete (channel);
+}
+
+
+int Server::get_operators_server(void)
+{
+	// int num;
+
+	// for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
+	// {
+		
+	// }
+
+	std::cout << YELLOW << "get operators server" << RESET << std::endl;
+	return 0;
 }

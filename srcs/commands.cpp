@@ -119,8 +119,8 @@ void Server::lusers(const int& fd, Message& message)
 	(void)message;
 	Client *client = *(get_client_byfd(fd));
 	send_message(fd, RPL_LUSERCLIENT(client->nickname, int_to_string(client->server->clients.size())));
-	send_message(fd, RPL_LUSEROP(client->nickname, "0"));	//arreglar numero cuando tenga operadores
-	send_message(fd, RPL_LUSERUNKNOWN(client->nickname));
+	send_message(fd, RPL_LUSEROP(client->nickname, int_to_string((get_operators_server()))));	//arreglar numero cuando tenga operadores
+	send_message(fd, RPL_LUSERUNKNOWN(client->nickname, int_to_string(client->server->clients.size()-client->server->fds_poll.size())));
 	send_message(fd, RPL_LUSERCHANNELS(client->nickname, int_to_string(client->server->channels.size())));
 	send_message(fd, RPL_LUSERME(client->nickname, int_to_string(client->server->clients.size()), "1"));
 	send_message(fd, RPL_lOCALUSERS(client->nickname, int_to_string(client->server->clients.size()), "1")); //Tercer argumento es el maximo de clientes conectados
@@ -174,10 +174,6 @@ void Server::whois(const int& fd, Message& message)
 	send_message(fd, RPL_WHOISSERVER(client->get_realname(), whois->nickname, "ft_irc", "This is a IRC server developed for 42_cursus"));
 	//solucionar problema fecha
 	send_message(fd, RPL_WHOISIDLE(client->get_realname(), whois->nickname, get_seconds(whois->time_now), get_seconds(whois->time_init)));
-
-	//check if client is operator and then send
-	// send_message(fd, RPL_WHOISOPERATOR(client->get_realname(), whois->nickname));
-	// send_message(fd, RPL_WHOISMODES(client->get_realname(), whois->nickname, whois->get_modes()));
 
 	send_message(fd, RPL_WHOISCHANNELS(client->get_realname(), whois->nickname, whois->get_channel_names()));
 
@@ -318,6 +314,7 @@ void	Server::mode(const int& fd, Message& message)
 	if (is_valid_mode(args[1], client) == false)
 		return;
 	modes_change = channel->handle_mode(args);
+	std::cout << PINK << RPL_MODE(channel->get_name(), client->nickname, modes_change) << RESET << std::endl;
 	if (modes_change.length() > 2)
 		channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, modes_change));
 }
@@ -562,7 +559,7 @@ void	Server::kick(const int& fd, Message& message)
 	Channel *channel;
 	std::vector<Channel *>::iterator channel_it;
 
-	std::string args = join_split(message.args, 0, " ");
+	std::string args = join_split(message.args, 0, " ");		//erick, que??????????
 	std::vector<std::string> args_split = split(args, ' ');
 
 	if (args_split.size() < 2)
@@ -654,4 +651,49 @@ void	Server::names(const int& fd, Message& message)
 	for(channel_it = channel_list.begin(); channel_it != channel_list.end(); channel_it++)
 		send_message(fd, RPL_NAMREPLY(client->get_realname(), (*channel_it)->get_name(), (*channel_it)->get_list_of_clients(client)));
 	send_message(fd, RPL_ENDOFNAMES(client->get_realname(), ""));
+}
+
+
+void	Server::oper(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 2)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), message.cmd));
+	if (client->is_oper == true)
+		return send_message(fd, RPL_YOUREOPER(client->get_realname(), "You are already an IRC operator"));
+	for (std::vector<std::pair<std::string, std::string> >::iterator iter = possible_opers.begin(); iter != possible_opers.end(); iter++)
+	{
+		if (iter->first == message.args[0] && iter->second == message.args[1])
+		{
+			client->is_oper = true;
+			return send_message(fd, RPL_YOUREOPER(client->get_realname(), "You are now an IRC operator"));
+		}
+	}
+	return send_message(fd, ERR_PASSWDMISMATCH(client->get_realname()));
+}
+
+
+void	Server::kill(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+
+	if (message.args.size() < 1)
+		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "KILL"));
+	Client *killed = get_client_by_nickname(message.args[0]);
+	if (killed == NULL)
+		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), message.args[0]));
+	if (client->is_oper == false)
+		return send_message(fd, ERR_NOPRIVILEGES(client->get_realname()));
+	if (client->nickname == message.args[0])
+		return send_message(fd, ERR_UNKNOWNERROR(client->get_realname(), "KILL -> You can't kill yourself out of the server"));
+	
+	Message msg;
+	msg.cmd = "QUIT";
+	std::string target = join_split(message.args, 1, " ");
+	msg.message = "QUIT" + target;
+	msg.args = split(target, ' ');
+	
+	send_message(killed->fd, ":" + client->get_realname() + " ERROR " + ":" + target + IRC_ENDLINE);
+	Server::quit(killed->fd, msg);
+
 }

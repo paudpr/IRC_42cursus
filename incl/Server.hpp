@@ -48,6 +48,9 @@ class Server {
 		void kick(const int& fd, Message& message);
 		void list(const int& fd, Message& message);
 		void names(const int& fd, Message& message);
+		void oper(const int& fd, Message& message);
+		void kill(const int& fd, Message& message);
+		// void close(const int& fd, Message& message); //disconnects all unkown connections (clientes  que no  se han registrado)
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);
@@ -62,6 +65,7 @@ class Server {
 		std::vector<ptr> commands;
 		std::vector<Client*> clients;
 		std::vector<pollfd> fds_poll;
+		std::vector<std::pair<std::string, std::string> > possible_opers;
 
 		int				server_fd;
 		int				server_port;
@@ -83,6 +87,7 @@ class Server {
 		void do_communications(std::vector<pollfd>::iterator &iter);
 
 		//utils server
+		void save_opers();
 		void save_commands();
 		void check_ping();
 		std::vector<Client*>::iterator get_client_byfd(int fd);
@@ -112,4 +117,7 @@ class Server {
 
 		//Channel
 		void							remove_channel(Channel *channel);
+
+		int get_operators_server(void);
+
 };
