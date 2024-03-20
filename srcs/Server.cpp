@@ -118,8 +118,6 @@ void	Server::remove_client(std::vector<pollfd>::iterator &iter)
 	Client *client = *(get_client_byfd(iter->fd));
 	client->is_online = false;
 
-	//abandonar channels
-
 	std::cout << RED << "[Server]: Client " << iter->fd
 		<< " from " << inet_ntoa(connection_addr.sin_addr)
 		<< ":" << ntohs(connection_addr.sin_port)
@@ -308,12 +306,42 @@ void Server::save_commands()
 	commands.push_back(&Server::shutdown);
 }
 
+std::string clean_string(std::string line)
+{
+	std::string clean_line;
+
+	while(isspace(line[0]))
+		line.erase(0, 1);
+	clean_line = line.substr(0, line.find_last_not_of(" \r\t\n") + 1);
+	return  clean_line;
+}
+
 void Server::save_opers()
 {
-	//ahora hardcoded a macros
-	//leer de archivo de configuración lista de usuario y contraseñas y  guardas
-	//comprobar que nicks no estén repetidos -> tirar error de archivo config
-	possible_opers.push_back(std::make_pair(OPER_NICK, OPER_PASS));
+	std::string filename = "./conf/opers.conf";
+	std::ifstream file(filename.c_str());
+	if (!file.is_open())
+	{
+		std::cout << "[Server] Error opening config file." << std::endl;
+		return ;
+	}
+	std::string line;
+	std::getline(file, line);
+	if (line != "oper_nick, oper_pass")
+	{
+		std::cout << "[Server] Error server format in config file" << std::endl;
+		return ;
+	}
+	while (std::getline(file, line))
+	{
+		if (line.find(',') == std::string::npos)
+			continue ;
+		std::string nick;
+		std::string pass;
+		nick = clean_string(line.substr(0, line.find(',')));
+		pass = clean_string(line.substr(line.find(',') + 1));
+		possible_opers.push_back((std::make_pair(nick, pass)));
+	}
 }
 
 void Server::send_message(const int &fd, std::string message)
