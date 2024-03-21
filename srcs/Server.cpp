@@ -252,7 +252,7 @@ void	Server::start()
 		}
 		// check_ping();
 	}
-	std::cout << BLUE << "Ending server. Bye!" << RESET << std::endl;
+	std::cout << CYAN << "Ending server. Bye!" << RESET << std::endl;
 }
 
 std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
@@ -357,7 +357,7 @@ void Server::send_message(const int &fd, std::string message)
 		std::vector<Client*>::iterator client = get_client_byfd(fd);
 		(*client)->send_leftovers = message.substr(read);
 	}
-	std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+	// std::cout << GREY << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
 
 bool	Server::find_channel(std::string name) //TODO

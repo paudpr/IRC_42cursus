@@ -172,11 +172,8 @@ void Server::whois(const int& fd, Message& message)
 	send_message(fd, RPL_WHOISREGNICK(client->get_realname(), whois->nickname));
 	send_message(fd, RPL_WHOISUSER(client->get_realname(), whois->nickname, whois->username, whois->hostname, whois->realname));
 	send_message(fd, RPL_WHOISSERVER(client->get_realname(), whois->nickname, "ft_irc", "This is a IRC server developed for 42_cursus"));
-	//solucionar problema fecha
-	send_message(fd, RPL_WHOISIDLE(client->get_realname(), whois->nickname, get_seconds(whois->time_now), get_seconds(whois->time_init)));
-
+	send_message(fd, RPL_WHOISIDLE(client->get_realname(), whois->nickname, get_seconds(whois->time_now), ""));
 	send_message(fd, RPL_WHOISCHANNELS(client->get_realname(), whois->nickname, whois->get_channel_names()));
-
 	std::string end = join_split(message.args, 0, ", ");
 	send_message(fd, RPL_AWAY(client->get_realname(), whois->nickname, "I'm away!"));
 	send_message(fd, RPL_ENDOFWHOIS(client->get_realname(), end));

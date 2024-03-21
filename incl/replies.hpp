@@ -116,10 +116,6 @@
 // * COMMANDS
 
 // WHOIS
-// RPL_WHOISACTUALLY (338)
-// RPL_WHOISMODES (379)
-// RPL_WHOISSECURE (671)
-// RPL_AWAY (301)
 # define RPL_WHOISCERTFP(client, nick, fingerprint) ":ft_irc 276 " + client + " " + nick + " :has client certificate fingerprint " + fingerprint + IRC_ENDLINE
 # define RPL_WHOISREGNICK(client, nick) ":ft_irc 307 " + client + " " + nick + " :has identified for this nick" + IRC_ENDLINE
 # define RPL_WHOISUSER(client, nick, username, hostname, realname) ":ft_irc 311 " + client + " " + nick + " " + username + " " + hostname + " * :" + realname + IRC_ENDLINE
@@ -131,9 +127,9 @@
 # define RPL_WHOISSPECIAL(client, nick, especial) ":ft_irc 320 " + client + " " + nick + " :" + especial + IRC_ENDLINE
 # define RPL_WHOISACCOUNT(client, nick, account) ":ft_irc 330 " + client + " " + nick + " " + account + " :is logged in as" + IRC_ENDLINE
 // # define RPL_WHOISACTUALLY(client, nick, user, host, server, ip, realname) ":ft_irc 338 " + client + " " + nick + " " + user + " " + host + " " + server + " " + ip + " :" + realname + IRC_ENDLINE
-# define RPL_WHOISHOST(client, nick) ":ft_irc 378 " + client + " " + nick + " :is connecting from *@localhost 127.0.0.1" + IRC_ENDLINE
-# define RPL_WHOISMODES(client, nick, modes) ":ft_irc 379 " + client + " " + nick + " :is using modes " + modes + IRC_ENDLINE
-# define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
+// # define RPL_WHOISHOST(client, nick) ":ft_irc 378 " + client + " " + nick + " :is connecting from *@localhost 127.0.0.1" + IRC_ENDLINE
+// # define RPL_WHOISMODES(client, nick, modes) ":ft_irc 379 " + client + " " + nick + " :is using modes " + modes + IRC_ENDLINE
+// # define RPL_WHOISSECURE(client, nick) ":ft_irc 671 " + client + " " + nick + " :is using a secure connection" + IRC_ENDLINE
 # define RPL_AWAY(client, nick, message) ":ft_irc 301 " + client + " " + nick + " :" + message + IRC_ENDLINE
 
 // * LIST
