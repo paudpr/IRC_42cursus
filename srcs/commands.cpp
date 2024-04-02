@@ -548,7 +548,6 @@ void	Server::invite(const int& fd, Message& message)
 *		- Si el que usa el comando no esta en el canal, se notifica.	
 */
 //?Testear
-//TODO: eliminar al usuario del vector
 void	Server::kick(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));

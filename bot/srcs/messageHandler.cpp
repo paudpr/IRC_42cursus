@@ -208,6 +208,12 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	if (sendHTTPRequest(sockfd, request) == false)
 		return ;
 	std::string response = receiveHTTPRequest(sockfd);
+	if (response.find("404 Not Found") != std::string::npos)
+	{
+		sendPrivmsg(channel, "City not found");
+		close(sockfd);
+		return ;
+	}
 	if (response.empty())
 		return ;
 	close(sockfd);
@@ -216,7 +222,7 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	std::string weather = "Weather in " + city + " ";
 	sendPrivmsg(channel, weather);
 	json = json.substr(json.find("{"));
-	std::cout << json << std::endl;
+	// std::cout << json << std::endl;
 	result = parseWeather(json);
 	for (it = result.begin(); it != result.end(); ++it)
 		sendPrivmsg(channel, *it);
