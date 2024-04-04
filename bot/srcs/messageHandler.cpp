@@ -144,6 +144,11 @@ void	Bot::privmsgHandler(std::string msg)
 		timeHandler(channel);
 	else if (command.find("weather") != std::string::npos)
 		weatherHandler(channel, arg);
+	else if (command.find("off") != std::string::npos)
+	{
+		broadcastMessage("Goodbye");
+		setOnline(false);
+	}
 }
 
 // Commands
@@ -203,7 +208,10 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	std::string city = joinSplit(split(msg, " "));
 	int	sockfd = connectToWeatherAPI();
 	if (sockfd < 0)
+	{
+		sendPrivmsg(channel, "Could not connect");
 		return ;
+	}
 	std::string request = "GET /data/2.5/weather?q=" + city + "&appid=" + weatherAPI + " HTTP/1.1\r\nHost: api.openweathermap.org\r\n\r\n";
 	if (sendHTTPRequest(sockfd, request) == false)
 		return ;
@@ -282,4 +290,11 @@ std::string	Bot::receiveHTTPRequest(int sockfd)
 	}
 	response = std::string(buffer, bytes);
 	return (response);
+}
+
+void	Bot::broadcastMessage(std::string msg)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+		sendPrivmsg(*it, msg);
 }

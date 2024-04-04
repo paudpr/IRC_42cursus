@@ -1,5 +1,11 @@
 #include "irc_bot.hpp"
 
+void	Bot::freeBot(void)
+{
+	free(servinfo->ai_addr);
+	free(servinfo);
+}
+
 // Getters
 std::string	Bot::getNick(void) const
 {

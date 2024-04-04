@@ -1,6 +1,14 @@
 #include "irc_bot.hpp"
 
+void	showLeaks(void)
+{
+	system("leaks -q ircbot");
+}
 
+void	showFds(void)
+{
+	system("lsof -c ircbot");
+}
 
 int	main(int ac, char **av)
 {
@@ -8,6 +16,12 @@ int	main(int ac, char **av)
 	std::string password;
 	std::string port;
 
+	#ifdef LEAKS
+	atexit(showLeaks);
+	#endif
+	#ifdef FD
+	atexit(showFds);
+	#endif
 	if (!check_arguments(ac, av))
 		return (1);
 
@@ -26,5 +40,6 @@ int	main(int ac, char **av)
 	} catch (std::exception &e) {
 		std::cout << BIRed << e.what() << " - " << strerror(errno) << Color_Off << std::endl;
 	}
+	bot.freeBot();
 	return (0);
 }

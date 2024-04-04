@@ -3,8 +3,9 @@ NAME		=	ircbot
 CXX			=	c++
 CXXFLAGS	=	-std=c++98 -Wall -Werror -Wextra -g3
 CXXFLAGS	+=	-I $(INC_DIR)
-LDFLAGS		=	-lcurl
 DEBUGFLAGS = -fsanitize=address -g3
+LEAKSFLAG	=	-DLEAKS=1
+FDFLAG		=	-DFD=1
 
 OBJ_DIR = objs
 SRC_DIR = srcs
@@ -20,18 +21,25 @@ SRCS = main.cpp \
 OBJS = $(SRCS:%.cpp=%.o)
 OBJS_DIR = $(addprefix $(OBJ_DIR)/,$(OBJS))
 
+all: CXXFLAGS += -DPROD=1
 all: $(NAME)
 
+leaks: CXXFLAGS += $(LEAKSFLAG)
+leaks: all
+
+fd: CXXFLAGS += $(FDFLAG)
+fd: all
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJS_DIR): | $(OBJ_DIR)
 
 $(NAME): $(OBJS_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJS_DIR) -o $(NAME) $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) $(OBJS_DIR) -o $(NAME) $(LDFLAGS)
 
 $(OBJ_DIR): 
-	mkdir -p $(OBJ_DIR) 2> /dev/null
+	@mkdir -p $(OBJ_DIR) 2> /dev/null
 
 re: fclean all
 
@@ -39,9 +47,9 @@ debug: CXXFLAGS += $(DEBUGFLAGS)
 debug: $(NAME)
 
 clean:
-	rm -rf $(OBJ_DIR)
+	@rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -rf $(NAME)
+	@rm -rf $(NAME)
 
 .PHONY: re clean fclean debug
