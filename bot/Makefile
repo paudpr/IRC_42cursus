@@ -21,7 +21,6 @@ SRCS = main.cpp \
 OBJS = $(SRCS:%.cpp=%.o)
 OBJS_DIR = $(addprefix $(OBJ_DIR)/,$(OBJS))
 
-all: CXXFLAGS += -DPROD=1
 all: $(NAME)
 
 leaks: CXXFLAGS += $(LEAKSFLAG)

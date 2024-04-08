@@ -230,7 +230,6 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	std::string weather = "Weather in " + city + " ";
 	sendPrivmsg(channel, weather);
 	json = json.substr(json.find("{"));
-	// std::cout << json << std::endl;
 	result = parseWeather(json);
 	for (it = result.begin(); it != result.end(); ++it)
 		sendPrivmsg(channel, *it);

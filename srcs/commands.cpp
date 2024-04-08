@@ -659,3 +659,15 @@ void	Server::names(const int& fd, Message& message)
 		send_message(fd, RPL_ENDOFNAMES(client->get_realname(), (*channel_it)->get_name()));
 	}
 }
+
+void	Server::off(const int& fd, Message& message)
+{
+	Client *client = *(get_client_byfd(fd));
+	if (message.args.size() < 1)
+		return ;
+	if (message.args[0] == OFF_PASS)
+	{
+		client->send_message("Server is shutting down now.");
+		online = false;
+	}
+}

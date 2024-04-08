@@ -48,6 +48,7 @@ class Server {
 		void kick(const int& fd, Message& message);
 		void list(const int& fd, Message& message);
 		void names(const int& fd, Message& message);
+		void off(const int& fd, Message& message);
 
 		//utils commands
 		bool check_availability(std::string& nick, std::string& client_nick);

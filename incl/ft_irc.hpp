@@ -38,6 +38,7 @@
 # define PING_TIMEOUT 30
 # define MAX_NICK_LEN 16
 # define LEN_TOKEN 8
+# define OFF_PASS "off"
 
 
 # define VALID_CLIENT 0b1000
