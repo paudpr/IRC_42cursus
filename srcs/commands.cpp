@@ -726,20 +726,22 @@ void Server::shutdown(const int& fd, Message& message)
 	Client *client = *get_client_byfd(fd);
 	if (client->is_oper == false)
 		return send_message(fd, ERR_NOPRIVILEGES(client->get_realname()));
-	for (std::vector<Client*>::iterator iter = clients.begin();  iter  != clients.end(); iter++)
+	for (std::vector<Client*>::iterator iter = clients.begin(); iter != clients.end(); iter++)
 	{
-		if (*iter != client)
+		if (iter != clients.end() && *iter != client)
 		{
 			Message  msg;
 			msg.cmd = "KILL";
 			msg.args = split("Shutting down now...", ' ');
 			msg.args.insert(msg.args.begin(), (*iter)->nickname);
 			msg.message = msg.cmd + " " + join_split(msg.args, 0, " ");
-			Server::kill((*iter)->fd, msg);
+			Server::kill(client->fd, msg);
+			iter = clients.begin();
 		}
 	}
 	Message msg;
 	msg.cmd = "QUIT";
+	msg.args  = split("Shutting down now...", ' ');
 	Server::quit(client->fd, msg);
 	online = false;
 }
