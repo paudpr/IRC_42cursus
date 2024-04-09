@@ -12,6 +12,8 @@
 # include <arpa/inet.h>
 # include <sys/socket.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
 
 # include <fstream>
 # include <string>
@@ -43,9 +45,6 @@
 
 
 # define VALID_CLIENT 0b1000
-
-# define OPER_NICK "admin"
-# define OPER_PASS "admin$1234"
 
 
 # define RESET "\033[0m"

@@ -51,6 +51,19 @@ std::string Server::get_hostname()
 	return str;
 }
 
+
+
+
+// Function to convert decimal to hexadecimal string
+std::string decToHex(unsigned long long decVal) {
+    std::stringstream ss;
+    ss << std::hex << std::uppercase << decVal;
+    return ss.str();
+}
+
+
+
+
 void	Server::init()
 {
 	server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -83,7 +96,9 @@ void	Server::init()
 		close(server_fd);
 		throw std::runtime_error("[ ERROR ] Bind failed");
 	}
+
 }
+
 
 void	Server::add_client(std::vector<pollfd>::iterator &iter)
 {
@@ -99,7 +114,6 @@ void	Server::add_client(std::vector<pollfd>::iterator &iter)
 		close(fd_connection);
 	}
 
-	fcntl(fd_connection, F_SETFL, O_NONBLOCK);
 	poll_connection = (struct pollfd){fd_connection, POLLIN, 0};
 	fds_poll.push_back(poll_connection);
 	iter = fds_poll.begin();
@@ -159,13 +173,16 @@ void Server::do_communications(std::vector<pollfd>::iterator &iter)
 	}
 
 	read_bytes = recv(iter->fd, buffer, BUFFER, 0);
-	std::cout << "[Server] " << buffer << RESET << std::endl;
-	msg.clear();
 	if (read_bytes <= 0)
 	{
 		remove_client(iter);
 		return ;
 	}
+	std::string recv_message(buffer);
+	while (recv_message[recv_message.length() - 1] == '\n')
+		recv_message.erase(recv_message.end() - 1);
+	std::cout << "[Server] " << recv_message << RESET << std::endl;
+	msg.clear();
 
 	buffer[read_bytes] = '\0';
 	(*client)->receive_leftovers += buffer;
@@ -219,6 +236,7 @@ void	Server::start()
 		close(server_fd);
 		throw std::runtime_error("[ ERROR ] Listen failed");
 	}
+	fcntl(server_fd, F_SETFL, O_NONBLOCK);
 
 	time_t		time_now;
 	time(&time_now);
@@ -226,8 +244,6 @@ void	Server::start()
 	time_init.resize(time_init.size() - 1);
 
 	std::cout << GREEN << "IRC Server started and listening at " << server_port << RESET << std::endl;
-
-	//gestionar  tiempo
 
 	while (online) {
 		int poll_count = poll(fds_poll.begin().base(), (nfds_t)fds_poll.size(), POLL_TIMEOUT_MS);

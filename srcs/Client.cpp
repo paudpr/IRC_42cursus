@@ -123,7 +123,7 @@ void	Client::send_message(std::string message)
 		total += byteswritten;
 		bytesleft -= byteswritten;
 	}
-	std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+	// std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
 
 void	Client::leave_channel(Channel *channel)

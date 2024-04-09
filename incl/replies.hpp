@@ -11,20 +11,20 @@
 # define RPL_WELCOME(nick, username, hostname) ":ft_irc 001 " + nick + " :Welcome to the ft_irc Internet Relay Chat Network, " + nick + "[!" + username + "@" + hostname + "]" IRC_ENDLINE
 # define RPL_YOURHOST(client, servername, version) ":ft_irc 002 " + client + " :Your host is " + servername + ", running version " + version + IRC_ENDLINE
 # define RPL_CREATED(client, datetime)  ":ft_irc 003 " + client + " :This server was created " + datetime + IRC_ENDLINE
-# define RPL_MYINFO(client, servername, version, availableUserModes, availableChannelModes) ":ft_irc 004 " + client + " " + servername + " " + version + " " + availableUserModes + " " + availableChannelModes + IRC_ENDLINE
-# define RPL_ISUPPORT(client) ":ft_irc 005 " + client +  " CHARSET=ascii CHANTYPES=# PREFIX=(o)@ NAMESX=NO :are supported by this server" + IRC_ENDLINE
+# define RPL_MYINFO(client, servername, version, availableUserModes, availableChannelModes) ":ft_irc 004 " + client + " :" + servername + " " + version + " " + availableUserModes + " " + availableChannelModes + IRC_ENDLINE
+# define RPL_ISUPPORT(client) ":ft_irc 005 " + client +  " :CHARSET=ascii CHANTYPES=# PREFIX=(o)@ NAMESX=NO are supported by this server" + IRC_ENDLINE
 
 // LUSER
 # define RPL_LUSERCLIENT(client, num) ":ft_irc 251 " + client + " :There are " + num + " users and 0 services on 1 servers" + IRC_ENDLINE
-# define RPL_LUSEROP(client, num ) ":ft_irc 252 " + client + " " + num + " : clients with operator privileges online" + IRC_ENDLINE
-# define RPL_LUSERUNKNOWN(client, num) ":ft_irc 253 " + client + " " + num + " :unknown connection(s)" + IRC_ENDLINE
-# define RPL_LUSERCHANNELS(client, num) ":ft_irc 254 " + client + " " + num + " :channels formed" + IRC_ENDLINE
-# define RPL_LUSERME(client, num, num2) ":ft_irc 255 " + client + " :I have " + num + " client(s) and " + num2 + " server(s)" + IRC_ENDLINE
+# define RPL_LUSEROP(client, num ) ":ft_irc 252 " + client + " :" + num + " clients with operator privileges online" + IRC_ENDLINE
+# define RPL_LUSERUNKNOWN(client, num) ":ft_irc 253 " + client + " :" + num + " unknown connection(s)" + IRC_ENDLINE
+# define RPL_LUSERCHANNELS(client, num) ":ft_irc 254 " + client + " :" + num + " channels formed" + IRC_ENDLINE
+# define RPL_LUSERME(client, num, num2) ":ft_irc 255 " + client + " :This server has " + num + " client(s) and " + num2 + " server(s)" + IRC_ENDLINE
 # define RPL_lOCALUSERS(client, num, max) ":ft_irc 265 " + client + " :Current local users: " + num + ", max: " + max + IRC_ENDLINE
 # define RPL_GLOBALUSERS(client, num, max) ":ft_irc 266 " + client + " :Current global users: " + num + ", max: " + max + IRC_ENDLINE
 
-# define RPL_MOTDSTART(client) ":ft_irc 375 " + client + ":-Start Message of the Day" + IRC_ENDLINE
-# define RPL_MOTD ":ft_irc 372 :<line  of the motd\n"
+# define RPL_MOTDSTART(client) ":ft_irc 375 " + client + " :Start Message of the Day" + IRC_ENDLINE
+# define RPL_MOTD(client) ":ft_irc 372 " + client + " :<line of the motd>\n"
 # define RPL_ENDOFMOTD(client) ":ft_irc 376 " + client + " :End of /MOTD command" + IRC_ENDLINE
 
 # define ERR_PASSWDMISMATCH(client) ":ft_irc 464 " + client + " :Password incorrect" + IRC_ENDLINE
@@ -41,7 +41,8 @@
 // # define ERR_NOSUCHSERVER "[402] ERR_NOSUCHSERVER"
 
 // * No such channel
-# define RPL_CHANGENICK(old_nick, new_nick) ":" + old_nick + " NICK " + new_nick + IRC_ENDLINE
+
+// # define RPL_CHANGENICK(new_nick) ":" + "Changed nick to " + new_nick + IRC_ENDLINE
 
 // # define RPL_ENDOFWHOIS "[318] RPL_ENDOFWHOIS"
 

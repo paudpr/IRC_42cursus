@@ -90,8 +90,8 @@ void Server::nick(const int& fd, Message& message)
 	std::string prev = (*client)->nickname;
 	(*client)->nickname = message.args[0];
 
-	std::string msg  = ":" + prev  + " NICK " + (*client)->nickname + "\r\n"; 
-	send_message(fd, RPL_CHANGENICK(prev, (*client)->nickname));
+	// std::string msg  = ":" + prev  + " NICK " + (*client)->nickname + "\r\n"; 
+	// send_message(fd, RPL_CHANGENICK((*client)->nickname));
 	check_valid_user(*client, message);
 }
 
@@ -144,7 +144,7 @@ void Server::motd(const int& fd, Message& message)
 	(void)message;
 	Client *client = *(get_client_byfd(fd));
 	send_message(fd, RPL_MOTDSTART(client->nickname));
-	send_message(fd, RPL_MOTD);
+	send_message(fd, RPL_MOTD(client->nickname));
 	send_message(fd, RPL_ENDOFMOTD(client->nickname));
 }
 
@@ -183,12 +183,15 @@ void Server::whois(const int& fd, Message& message)
 void Server::quit(const int& fd, Message& message)
 {
 	std::string msg = join_split(message.args, 0, " ");
-	msg = "QUIT: " + msg;
+	Client *client = *get_client_byfd(fd);
+		
+	if (msg.empty())
+		msg = client->get_realname() + " QUIT" + std::string(IRC_ENDLINE);
+	else 
+		msg = client->get_realname() + " QUIT: " + msg + std::string(IRC_ENDLINE);
 	send_message(fd, msg);
 
-	Client *client = *get_client_byfd(fd);
-	std::vector<Channel *>::iterator it  = client->channels.begin();
-	
+	std::vector<Channel *>::iterator it  = client->channels.begin();	
 	while (it != client->channels.end())
 	{
 		std::string msg = client->nickname + " has left " + (*it)->get_name() + IRC_ENDLINE; 
@@ -354,23 +357,12 @@ void	Server::privmsg(const int& fd, Message& message)
 		return ;
 	targets.pop_back();
 	targets.push_back(last_args[0]);
-	std::cout << join_split(targets, 0, " ") << std::endl;
 	for (iter = targets.begin(); iter != targets.end(); ++iter)
 	{
 		target = *iter;
 		if (target.empty())
 			return ;
-		channel_it = get_channel_by_name(target);
-		if (channel_it != channels.end())
-		{
-			channel = *channel_it;
-			if (client->is_in_channel(channel->get_name()) == false)
-				return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
-			if (msg[0] == ':')
-				msg.erase(0, 1);
-			channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
-		}
-		else if (client_exists(target))
+		if (client_exists(target))
 		{
 			Client *target_client = get_client_by_nickname(target);
 			if (target_client == NULL)
@@ -380,7 +372,22 @@ void	Server::privmsg(const int& fd, Message& message)
 			target_client->send_message(RPL_PRIVMSG(client->nickname, target_client->nickname, msg));
 		}
 		else
-			send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+		{
+			if  (target[0] != '#')
+				target  = "#" + target;
+			channel_it = get_channel_by_name(target);
+			if (channel_it != channels.end())
+			{
+				channel = *channel_it;
+				if (client->is_in_channel(channel->get_name()) == false)
+					return send_message(fd, ERR_CANNOTSENDTOCHAN(client->get_realname(), channel->get_name()));
+				if (msg[0] == ':')
+					msg.erase(0, 1);
+				channel->send_message(client, RPL_PRIVMSG(client->nickname, channel->get_name(), msg));
+			}
+			else
+				send_message(fd, ERR_NOSUCHNICK(client->get_realname(), target));
+		}
 	}
 }
 
@@ -421,6 +428,8 @@ void	Server::part(const int& fd, Message& message)
 	for (iter = channels_names.begin(); iter != channels_names.end(); ++iter)
 	{
 		channel_name = *iter;
+		if (channel_name[0] != '#')
+			channel_name = "#" + channel_name;
 		if (channel_name.empty())
 			return ;
 		channel_it = get_channel_by_name(channel_name);
@@ -461,9 +470,12 @@ void	Server::topic(const int& fd, Message& message)
 	if (message.args.size() < 1)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "TOPIC"));
 
-	channel_it = get_channel_by_name(message.args[0]);
+	std::string chan_name(message.args[0]);
+	if (chan_name[0] != '#')
+		chan_name = "#" + chan_name;
+	channel_it = get_channel_by_name(chan_name);
 	if (channel_it == channels.end())
-		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), message.args[0]));
+		return send_message(fd, ERR_NOSUCHCHANNEL(client->get_realname(), chan_name));
 	channel = *channel_it;
 
 	if (message.args.size() < 2 || message.args[1] == ":")
@@ -509,10 +521,11 @@ void	Server::invite(const int& fd, Message& message)
 
 	nick = message.args[0];
 	channel_name = message.args[1];
+	if (channel_name[0] == '#')
+		channel_name = "#" + channel_name;
 
 	if (client_exists(nick) == false)
 		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), nick));
-	
 	
 	channel_it = get_channel_by_name(channel_name);
 	if (channel_it == channels.end())
@@ -564,6 +577,8 @@ void	Server::kick(const int& fd, Message& message)
 		return send_message(fd, ERR_NEEDMOREPARAMS(client->get_realname(), "KICK"));
 
 	channel_name = args_split[0];
+	if (channel_name[0] != '#')
+		channel_name = "#" + channel_name;
 	users = split(args_split[1], ',');
 	if (args_split.size() > 2)
 		comment = join_split(args_split, 2, " ");
@@ -613,8 +628,13 @@ void	Server::list(const int& fd, Message& message)
 		channel_join = join_split(message.args, 0, " ");
 		channel_list = split(channel_join, ',');
 		for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
-			if (find_channel(*iter))
-				channels_to_list.push_back(*get_channel_by_name(*iter));
+		{
+			std::string chan_name = *iter;
+			if (chan_name[0] != '#')
+				chan_name = "#" + chan_name;
+			if (find_channel(chan_name))
+				channels_to_list.push_back(*get_channel_by_name(chan_name));
+		}
 	}
 	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
 		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
@@ -690,18 +710,18 @@ void	Server::kill(const int& fd, Message& message)
 	Message msg;
 	msg.cmd = "QUIT";
 	std::string target = join_split(message.args, 1, " ");
-	msg.message = "QUIT" + target;
-	msg.args = split(target, ' ');
-	
-	send_message(killed->fd, ":" + client->get_realname() + " ERROR " + ":" + target + IRC_ENDLINE);
-	Server::quit(killed->fd, msg);
+	if (target.empty())
+		target = "Killed from server by oper " + client->nickname;
+	else
+		target = "Killed from server by oper " + client->nickname + " because \"" + target + "\"";
 
+	msg.message = "QUIT " + target;
+	msg.args = split(target, ' ');
+	Server::quit(killed->fd, msg);
 }
 
 void Server::shutdown(const int& fd, Message& message)
 {
-
-	(void)fd;
 	(void)message;
 	Client *client = *get_client_byfd(fd);
 	if (client->is_oper == false)
