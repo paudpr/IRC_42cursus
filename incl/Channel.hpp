@@ -40,11 +40,11 @@ class Channel
 
 		//Mode
 
-		void					change_mode_i(bool mode);
-		void					change_mode_t(bool mode);
-		void					change_mode_k(bool mode, std::string password);
-		void					change_mode_o(bool mode, Client *client);
-		void					change_mode_l(bool mode, int limit);
+		bool					change_mode_i(bool mode);
+		bool					change_mode_t(bool mode);
+		bool					change_mode_k(bool mode, std::string password);
+		bool					change_mode_o(bool mode, std::string name_op, Client *client);
+		bool					change_mode_l(bool mode, int limit);
 
 	public:
 		Channel();
@@ -77,7 +77,8 @@ class Channel
 		//Channel
 		Client*			find_client_by_nick(std::string nick);
 		void			add_client(Client* client);
-		std::string		handle_mode(std::vector<std::string> args);
+		std::string		check_modes(std::vector<std::string> args, Client *client);
+		bool			handle_mode(bool status, char mode, std::string arg, Client *client);
 
 		//JOIN
 		std::string		get_list_of_clients(Client *client);

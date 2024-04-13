@@ -40,8 +40,25 @@ bool Server::check_args(char *argv_port, char *argv_pass)
 	return true;
 }
 
+void	showLeaks()
+{
+	system("leaks -q ircserv");
+}
+
+void	showFds()
+{
+	system("lsof -c ircserv");
+}
+
 int		main(int argc, char** argv) {
 
+	#ifdef LEAKS
+	std::cout << "LEAKS" << std::endl;
+	atexit(showLeaks);
+	#endif
+	#ifdef FD
+	atexit(showFds);
+	#endif
 	if (argc != 3)
 	{
 		std::cout << "[ ERROR ] Invalid arguments. Must follow this structure: \n" 

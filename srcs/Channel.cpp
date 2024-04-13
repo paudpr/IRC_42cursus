@@ -44,71 +44,83 @@ void	Channel::init_modes(void)
 	mode.t = true;
 }
 
-std::string	Channel::handle_mode(std::vector<std::string> args)
+bool	Channel::handle_mode(bool status, char mode, std::string arg, Client *client)
 {
-	std::string mode_flags = args[1];
-	bool mode = mode_flags[0] == '+';
-	std::string modes_aplied = mode_flags.substr(0, 1);
-	std::string modes_args;
-	mode_flags = mode_flags.substr(1);
-	args.erase(args.begin(), args.begin() + 2);
-	std::vector<std::string>::iterator it;
-	it = args.begin();
-	for (size_t i = 0; i < mode_flags.size(); i++)
+	switch (mode)
 	{
-		if (mode_flags[i] == 'i')
-		{
-			change_mode_i(mode);
-			modes_aplied += "i";
-		}
-		if (mode_flags[i] == 't')
-		{
-			change_mode_t(mode);
-			modes_aplied += "t";
-		}
-		if (mode_flags[i] == 'k')
-		{
-			if (it != args.end() && it->length() > 0)
+		case 'i': // Invite only
+			return (change_mode_i(status));
+		case 't': // Topic
+			return (change_mode_t(status));
+		case 'k': // Key
+			return (change_mode_k(status, arg));
+		case 'l': // Limit
+			try
 			{
-				change_mode_k(mode, args[0]);
-				modes_aplied += "k";
-				if (mode == true)
-					modes_args += *(it);
+				change_mode_l(status, std::stoi(arg));
+				return true;
+			}
+			catch(const std::exception& e)
+			{
+				return (false);
+			}
+			
+		case 'o': // Operator
+			return (change_mode_o(status, arg, client));
+		default:
+			return (false);
+	}
+}
+//TODO
+std::string	Channel::check_modes(std::vector<std::string> args, Client *client)
+{
+	bool	mode_status;
+	bool	put_sign;
+	std::string	valid_flags;
+	std::string	valid_args;
+	std::string arg;
+	std::string	mode_flags = args[1];
+	std::vector<std::string> mode_args = split(join_split(args, 2, " "), ' ');
+	if (mode_args.size() == 0)
+		mode_args.push_back("");
+	std::vector<std::string>::iterator mode_it;
+	mode_it = mode_args.begin();
+	std::vector<char>::iterator it;
+	for (it = mode_flags.begin(); it != mode_flags.end(); ++it)
+	{
+		if (*it == '+' || *it == '-')
+		{
+			if (it + 1 != mode_flags.end())
+				if ((*(it + 1) == '+' || *(it + 1) == '-') && mode_it != mode_args.end())
+					continue;
+			put_sign = true;
+			mode_status = (*it == '+')? true : false;
+		}
+		if (mode_it == mode_args.end())
+			arg = "";
+		else
+			arg = *mode_it;
+		if (handle_mode(mode_status, *it, arg, client))
+		{
+			if (put_sign == true)
+			{
+				put_sign = false;
+				if (mode_status == true)
+					valid_flags += "+";
 				else
-					modes_args += "*";
-				it++;
+					valid_flags += "-";
 			}
-		}
-		if (mode_flags[i] == 'o')
-		{
-			if (it != args.end() && it->length() > 0)
-			{
-				Client *client = find_client_by_nick(*it);
-				if (client != NULL)
-				{
-					change_mode_o(mode, client);
-					modes_aplied += "o";
-					modes_args += *(it);
-					it++;
-				}
-			}
-		}
-		if (mode_flags[i] == 'l')
-		{
-			if (it != args.end() && it->length() > 0)
-			{
-				int limit = std::stoi(*it);
-				if ((mode == true && limit > 0) || mode == false)
-				{
-					modes_aplied += "l";
-					modes_args += *(it);
-					it++;
-				}
-			}
+			valid_flags += *it;
+			if (*it == 'k' && mode_status == false)
+				valid_args += "*";
+			else if (*it == 'k' || *it == 'l' || *it == 'o')
+				valid_args += arg + " ";
+			if (*it == 'k' || *it == 'l' || *it == 'o')
+				if (mode_it != mode_args.end())
+					mode_it++;
 		}
 	}
-	std::string modes_change = modes_aplied + " " + modes_args;
-	return (modes_change);
+	return (valid_flags + " " + valid_args);
 }
 
 void	Channel::broadcast_message(std::string message)
@@ -146,20 +158,20 @@ void	Channel::remove_client(Client* client)
 			break;
 		}
 	}
+	decrease_clients();
 }
 
 std::string	Channel::get_list_of_clients(Client *client)
 {
+	(void)client;
 	std::string list;
 	std::vector<Client*>::iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it)
 	{
-		if (*it == client)
-			continue ;
+		// if (*it == client)
+		// 	continue ;
 		if (is_operator(*it))
 			list += "@";
-		else
-			list += "+";
 		list += (*it)->nickname;
 		list += " ";
 	}
@@ -224,41 +236,75 @@ void	Channel::decrease_clients(void)
 }
 
 // Change modes	functions
-void	Channel::change_mode_i(bool mode)
+bool	Channel::change_mode_i(bool mode)
 {
+	if (this->mode.i == mode)
+		return (false);
 	this->mode.i = mode;
+	return (true);
 }
 
-void	Channel::change_mode_t(bool mode)
+bool	Channel::change_mode_t(bool mode)
 {
+	if (this->mode.t == mode)
+		return (false);
 	this->mode.t = mode;
+	return (true);
 }
 
-void	Channel::change_mode_k(bool mode, std::string password)
+bool	Channel::change_mode_k(bool mode, std::string password)
 {
-	this->mode.k = mode;
-	if (mode == true)
-		this->password = password;
+	if (password.length() == 0)
+		return (false);
 	else
+	if (mode == false)
+	{
+		this->mode.k = mode;
 		this->password = "";
+	}
+	else if (mode == true)
+	{
+		this->mode.k = mode;
+		this->password = password;
+	}
+	return (true);
 }
 
-void	Channel::change_mode_o(bool mode, Client *client)
+bool	Channel::change_mode_o(bool mode, std::string name_op, Client *client)
 {
-	this->mode.o = mode;
+	Client *op = find_client_by_nick(name_op);
+	if (op == NULL)
+	{
+		client->send_message(ERR_NOSUCHNICK(client->get_realname(), name_op));
+		return (false);
+	}
+	if (!is_operator(client))
+	{
+		client->send_message(ERR_CHANOPRIVSNEEDED(client->get_realname(), this->name));
+		return (false);
+	}
 	if (mode == true)
-		add_operator(client);
-	else
-		remove_operator(client);
+		add_operator(op);
+	else if (mode == false)
+		remove_operator(op);
+	return (true);
 }
 
-void	Channel::change_mode_l(bool mode, int limit)
+bool	Channel::change_mode_l(bool mode, int limit)
 {
-	this->mode.l = mode;
-	if (mode == true)
-		this->max_clients = limit;
-	else
+	if ((this->mode.l == false && mode == false) || limit <= 0)
+		return (false);
+	if (mode == false)
+	{
+		this->mode.l = mode;
 		this->max_clients = 0;
+	}
+	else if (mode == true)
+	{
+		this->mode.l = mode;
+		this->max_clients = limit;
+	}
+	return (true);
 }
 
 Client*	Channel::find_client_by_nick(std::string nick)
@@ -275,6 +321,7 @@ Client*	Channel::find_client_by_nick(std::string nick)
 void	Channel::add_client(Client* client)
 {
 	clients.push_back(client);
+	increase_clients();
 }
 
 void	Channel::set_topic(const std::string topic)

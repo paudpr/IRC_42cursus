@@ -91,6 +91,7 @@ std::string	Bot::recvMessage(void)
 void	Bot::incomingMessage(void)
 {
 	std::string msg = recvMessage();
+	std::cout << "RECIBIDO: " << msg <<  std::endl;
 	if (msg.find("\r\n") != std::string::npos)
 		msg.erase(msg.find("\r\n"), 2);
 	if (msg.find(RPL_INVITING) != std::string::npos)
@@ -144,6 +145,11 @@ void	Bot::privmsgHandler(std::string msg)
 		timeHandler(channel);
 	else if (command.find("weather") != std::string::npos)
 		weatherHandler(channel, arg);
+	else if (command.find("off") != std::string::npos)
+	{
+		broadcastMessage("Goodbye");
+		setOnline(false);
+	}
 }
 
 // Commands
@@ -203,11 +209,20 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	std::string city = joinSplit(split(msg, " "));
 	int	sockfd = connectToWeatherAPI();
 	if (sockfd < 0)
+	{
+		sendPrivmsg(channel, "Could not connect");
 		return ;
+	}
 	std::string request = "GET /data/2.5/weather?q=" + city + "&appid=" + weatherAPI + " HTTP/1.1\r\nHost: api.openweathermap.org\r\n\r\n";
 	if (sendHTTPRequest(sockfd, request) == false)
 		return ;
 	std::string response = receiveHTTPRequest(sockfd);
+	if (response.find("404 Not Found") != std::string::npos)
+	{
+		sendPrivmsg(channel, "City not found");
+		close(sockfd);
+		return ;
+	}
 	if (response.empty())
 		return ;
 	close(sockfd);
@@ -216,7 +231,6 @@ void	Bot::weatherHandler(std::string channel, std::string msg)
 	std::string weather = "Weather in " + city + " ";
 	sendPrivmsg(channel, weather);
 	json = json.substr(json.find("{"));
-	std::cout << json << std::endl;
 	result = parseWeather(json);
 	for (it = result.begin(); it != result.end(); ++it)
 		sendPrivmsg(channel, *it);
@@ -238,10 +252,6 @@ std::vector<std::string>	Bot::parseWeather(std::string json)
 	temp = std::to_string(int(round((std::stof(temp) - 273.15) * 100) / 100));
 	temp_max = std::to_string(int(round((std::stof(temp_max) - 273.15) * 100) / 100));
 	temp_min = std::to_string(int(round((std::stof(temp_min) - 273.15) * 100) / 100));
-	// sendPrivmsg(channel, "Temperature - " + temp + "°C");
-	// sendPrivmsg(channel, "Max - " + temp_max + "°C");
-	// sendPrivmsg(channel, "Min - " + temp_min + "°C");
-	// sendPrivmsg(channel, "Description - " + description);
 	result.push_back("Temperature - " + temp + "°C");
 	result.push_back("Max - " + temp_max + "°C");
 	result.push_back("Min - " + temp_min + "°C");
@@ -251,6 +261,7 @@ std::vector<std::string>	Bot::parseWeather(std::string json)
 
 void	Bot::sendPrivmsg(std::string channel, std::string msg)
 {
+	std::cout << "ENVIADO: " << msg << std::endl;
 	sendMessage("PRIVMSG " + channel + " :" + msg);
 }
 
@@ -278,6 +289,13 @@ std::string	Bot::receiveHTTPRequest(int sockfd)
 		close(sockfd);
 		return ("");
 	}
-	response = std::string(buffer, bytes); // asigna el contenido del buffer a response
+	response = std::string(buffer, bytes);
 	return (response);
+}
+
+void	Bot::broadcastMessage(std::string msg)
+{
+	std::vector<std::string>::iterator it;
+	for (it = channels.begin(); it != channels.end(); ++it)
+		sendPrivmsg(*it, msg);
 }

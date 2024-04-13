@@ -3,6 +3,8 @@ NAME = ircserv
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -g3
 CXXFLAGS += -I $(INC_DIR)
+LEAKSFLAG = -DLEAKS=1
+FDFLAG = -DFD=1
 
 OBJ_DIR = objs
 SRC_DIR = srcs
@@ -21,6 +23,12 @@ OBJS_DIR = $(addprefix $(OBJ_DIR)/,$(OBJS))
 
 all: $(NAME)
 
+leaks: CXXFLAGS += $(LEAKSFLAG)
+leaks: all
+
+fd: CXXFLAGS += $(FDFLAG)
+fd: all
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -36,6 +44,22 @@ re: fclean all
 
 debug: CXXFLAGS += -fsanitize=address -g3
 debug: $(NAME)
+
+#######################
+#		  Bot         #
+#######################
+bot:
+	@make -C bot
+bot_clean:
+	@make clean -C bot
+bot_fclean:
+	@make fclean -C bot
+bot_re:
+	@make re -C bot
+bot_leaks:
+	@make leaks -C bot
+bot_fd:
+	@make fd -C bot
 
 clean:
 	rm -rf $(OBJ_DIR)

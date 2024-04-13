@@ -197,7 +197,6 @@ void Server::quit(const int& fd, Message& message)
 		std::string msg = client->nickname + " has left " + (*it)->get_name() + IRC_ENDLINE; 
 		(*it)->broadcast_message(RPL_PART(client->get_realname(), (*it)->get_name(), msg));
 		(*it)->remove_client(client);
-		(*it)->decrease_clients();
 		if ((*it)->get_current_clients() == 0)
 			remove_channel(*it);
 		client->leave_channel(*it);
@@ -314,8 +313,7 @@ void	Server::mode(const int& fd, Message& message)
 		return send_message(fd, ERR_CHANOPRIVSNEEDED(client->get_realname(), args[0]));
 	if (is_valid_mode(args[1], client) == false)
 		return;
-	modes_change = channel->handle_mode(args);
-	std::cout << PINK << RPL_MODE(channel->get_name(), client->nickname, modes_change) << RESET << std::endl;
+	modes_change = channel->check_modes(args, client);
 	if (modes_change.length() > 2)
 		channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, modes_change));
 }
@@ -443,7 +441,6 @@ void	Server::part(const int& fd, Message& message)
 		client->leave_channel(channel);
 		channel->broadcast_message(RPL_PART(client->get_realname(), channel->get_name(), message_part));
 		channel->remove_client(client);
-		channel->decrease_clients();
 		if (channel->get_current_clients() == 0)
 			remove_channel(channel);
 		std::cout << "Client " << client->get_realname() << " has left channel " << channel->get_name() << std::endl;
@@ -521,9 +518,8 @@ void	Server::invite(const int& fd, Message& message)
 
 	nick = message.args[0];
 	channel_name = message.args[1];
-	if (channel_name[0] == '#')
+	if (channel_name[0] != '#')
 		channel_name = "#" + channel_name;
-
 	if (client_exists(nick) == false)
 		return send_message(fd, ERR_NOSUCHNICK(client->get_realname(), nick));
 	
@@ -558,7 +554,6 @@ void	Server::invite(const int& fd, Message& message)
 *		- Si el que usa el comando no esta en el canal, se notifica.	
 */
 //?Testear
-//TODO: eliminar al usuario del vector
 void	Server::kick(const int& fd, Message& message)
 {
 	Client *client = *(get_client_byfd(fd));
@@ -604,6 +599,8 @@ void	Server::kick(const int& fd, Message& message)
 		channel->remove_client(kicked);
 		kicked->leave_channel(channel);
 	}
+	if (channel->get_current_clients() == 0)
+		remove_channel(channel);
 }
 
 /*
@@ -636,6 +633,12 @@ void	Server::list(const int& fd, Message& message)
 				channels_to_list.push_back(*get_channel_by_name(chan_name));
 		}
 	}
+	else
+		for (std::vector<Channel *>::iterator iter = channels.begin(); iter != channels.end(); ++iter)
+			channel_list.push_back((*iter)->get_name());
+	for (std::vector<std::string>::iterator iter = channel_list.begin(); iter != channel_list.end(); iter++)
+		if (find_channel(*iter))
+			channels_to_list.push_back(*get_channel_by_name(*iter));
 	for (iter = channels_to_list.begin(); iter != channels_to_list.end(); iter++)
 		send_message(fd, RPL_LIST(client->get_realname(), (*iter)->get_name(), int_to_string((*iter)->get_current_clients()), (*iter)->get_topic()));
 	if (channels_to_list.empty())
@@ -667,8 +670,10 @@ void	Server::names(const int& fd, Message& message)
 			if (find_channel(*iter))
 				channel_list.push_back(*get_channel_by_name(*iter));
 	for(channel_it = channel_list.begin(); channel_it != channel_list.end(); channel_it++)
+	{
 		send_message(fd, RPL_NAMREPLY(client->get_realname(), (*channel_it)->get_name(), (*channel_it)->get_list_of_clients(client)));
 	send_message(fd, RPL_ENDOFNAMES(client->get_realname(), ""));
+	}
 }
 
 

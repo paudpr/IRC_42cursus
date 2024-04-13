@@ -412,7 +412,6 @@ void	Server::create_channel(std::string name, Client *client)
 	Channel *channel = new Channel(name, client);
 	this->add_channel(channel);
 	client->join_channel(channel);
-	channel->increase_clients();
 	channel->set_creation_time(unix_time());
 	send_message(client->fd, RPL_JOIN(client->get_realname(), name));
 	channel->broadcast_message(RPL_MODE(channel->get_name(), client->nickname, "+o " + client->nickname));
@@ -432,7 +431,6 @@ void	Server::join_channel(Client *client, std::string channel_name, std::string 
 		return ;
 	if (can_join_channel(client, channel, password) == false)
 		return ;
-	channel->increase_clients();
 	std::cout << RPL_JOIN(client->get_realname(), channel_name) << std::endl;
 	client->join_channel(channel);
 	channel->add_client(client);
@@ -480,11 +478,17 @@ bool	Server::is_valid_mode(std::string mode, Client *client)
 		return false;
 	flags_op = mode.substr(1);
 	for(size_t i = 0; i < flags_op.size(); i++)
+	{
+		if (flags_op[i] == 's' || flags_op[i] == 'n')
+			continue;
+		if (flags_op[i] == '+' || flags_op[i] == '-')
+			continue;
 		if (flags_op[i] != 'i' && flags_op[i] != 't' && flags_op[i] != 'k' && flags_op[i] != 'o' && flags_op[i] != 'l')
 		{
 			send_message(client->fd, ERR_UNKNOWNMODE(client->get_realname(), flags_op[i]));
 			return false;
 		}
+	}
 	return true;
 }
 

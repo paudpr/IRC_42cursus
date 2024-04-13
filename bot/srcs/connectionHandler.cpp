@@ -30,7 +30,9 @@ void	Bot::initializeSocket(void)
 void	Bot::connectToServer(void)
 {
 	if (connect(_socket, servinfo->ai_addr, servinfo->ai_addrlen) != 0)
+	{
 		throw std::runtime_error("[ ERROR ] Connect failed");
+	}
 }
 
 int	Bot::checkPoll(void)

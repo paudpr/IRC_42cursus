@@ -42,11 +42,13 @@ class Bot
 		void		joinHandler(std::string msg);
 		void		kickHandler(std::string msg);
 		void		privmsgHandler(std::string msg);
+		void		freeBot(void);
 
 		// Communication
 		void		sendMessage(std::string msg);
 		std::string	recvMessage(void);
 		int			checkPoll(void);
+		void		broadcastMessage(std::string msg);
 
 		void		incomingMessage(void);
 
