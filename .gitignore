@@ -3,3 +3,5 @@
 ircserv
 *.o
 no.cpp
+ircbot
+*/ircbot
