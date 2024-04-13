@@ -303,7 +303,6 @@ std::vector<Server::ptr>::iterator Server::get_command(std::string& name)
 	if (name == "KICK") return std::find(commands.begin(), commands.end(),  &Server::kick);
 	if (name == "LIST") return std::find(commands.begin(), commands.end(),  &Server::list);
 	if (name == "NAMES") return std::find(commands.begin(), commands.end(),  &Server::names);
-	if (name == "OFF") return std::find(commands.begin(), commands.end(),  &Server::off);
 	return (commands.end());
 }
 
@@ -327,7 +326,6 @@ void Server::save_commands()
 	commands.push_back(&Server::kick);
 	commands.push_back(&Server::list);
 	commands.push_back(&Server::names);
-	commands.push_back(&Server::off);
 }
 
 void Server::send_message(const int &fd, std::string message)
