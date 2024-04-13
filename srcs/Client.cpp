@@ -5,7 +5,7 @@ Client::Client() : is_online(false) {
 	memset(this, 0, sizeof(*this));
 }
 
-Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(input_fd), mode(0), is_online(false) 
+Client::Client(int input_fd, in_addr address, Server* i_server) : hostname(inet_ntoa(address)), server(i_server), fd(input_fd), mode(0), is_online(false), is_oper(false)
 {
 	ping_request = true;
 	time_init = std::time(NULL);
@@ -123,7 +123,7 @@ void	Client::send_message(std::string message)
 		total += byteswritten;
 		bytesleft -= byteswritten;
 	}
-	std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
+	// std::cout << get_time() << ": Sent to client [fd=" << fd << "] message:\n\t" << message << RESET << std::endl;
 }
 
 void	Client::leave_channel(Channel *channel)

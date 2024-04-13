@@ -32,14 +32,14 @@ int	main(int ac, char **av)
 	else
 		nick = "irc_bot";
 	
-	Bot bot(nick, password, port);
 	try {
+		Bot bot(nick, password, port);
 		bot.initializeSocket();
 		bot.connectToServer();
 		bot.run();
 	} catch (std::exception &e) {
 		std::cout << BIRed << e.what() << " - " << strerror(errno) << Color_Off << std::endl;
 	}
-	bot.freeBot();
+	// bot.freeBot(); TODO
 	return (0);
 }

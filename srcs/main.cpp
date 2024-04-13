@@ -17,7 +17,7 @@ bool Server::check_args(char *argv_port, char *argv_pass)
 		}
 	}
 	int port_value = std::stoi(port);
-	if (port_value > 65535)			//All ports below 1024 are RESERVED (unless you’re the superuser) <- lo gestiono????
+	if (port_value <= 1024 || port_value > 65535)			//All ports below 1024 are RESERVED (unless you’re the superuser) <- lo gestiono????
 	{
 		std::cerr << "[ ERROR ] Port not valid. Must be a number between 0 and 65535" << std::endl;
 		return false;
@@ -68,7 +68,7 @@ int		main(int argc, char** argv) {
 	Server server;
 	if (!server.check_args(argv[1], argv[2]))
 		return 1;
-	try { 
+	try {
 		server.init();
 		server.start();
 	} catch (std::exception &e) {

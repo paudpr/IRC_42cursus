@@ -39,6 +39,7 @@ class Client {
 		bool				is_online;
 		bool				ping_request;
 		std::string			ping_token;
+		bool				is_oper;
 
 		int pass_tries; 	//quitar si versión de Server::pass sin comprobación de tries
 

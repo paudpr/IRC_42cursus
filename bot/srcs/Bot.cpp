@@ -1,6 +1,6 @@
 #include "Bot.hpp"
 
-std::string Bot::weatherAPI = "17fb67835ec90850c2273db05881734e";
+std::string Bot::weatherAPI = "";
 
 Bot::Bot(void)
 	: _nick(""), _channel_password(""), _port("")
@@ -31,6 +31,20 @@ Bot &Bot::operator=(const Bot &rhs)
 	return *this;
 }
 
+std::string	getToken(void)
+{
+	std::string	filename = "./conf/API.conf";
+	std::ifstream file(filename.c_str());
+	if (!file.is_open())
+		throw std::runtime_error("[BOT] Error: can't get token");
+	std::string line;
+	std::getline(file, line);
+	while (line.find_last_of('\n') != std::string::npos)
+		line.erase(line.length(), -1);
+	if (line.empty())
+		throw std::runtime_error("[BOT] Error: No token");
+	return (line);
+}
 
 Bot::Bot(std::string nick, std::string password, std::string port)
 	: _nick(nick), _channel_password(password), _port(port)
@@ -39,7 +53,7 @@ Bot::Bot(std::string nick, std::string password, std::string port)
 	setOnline(false);
 	setSocket(-1);
 	setServerAddress("127.0.0.1");
-
+	weatherAPI = getToken();
 }
 
 
@@ -69,6 +83,7 @@ void	Bot::joinHandler(std::string msg)
 {
 	std::string channel;
 	channel = msg.substr(msg.find("#"));
+	std::cout << "Is in channel: " << ((isInChannel(channel))? "Si" : "No") << std::endl;
 	if (isInChannel(channel))
 		return ;
 	addChannel(channel);

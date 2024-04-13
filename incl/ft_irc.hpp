@@ -12,6 +12,10 @@
 # include <arpa/inet.h>
 # include <sys/socket.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+# include <fstream>
 # include <string>
 # include <map>
 # include <ctime>

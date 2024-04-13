@@ -91,6 +91,7 @@ std::string	Bot::recvMessage(void)
 void	Bot::incomingMessage(void)
 {
 	std::string msg = recvMessage();
+	std::cout << "RECIBIDO: " << msg <<  std::endl;
 	if (msg.find("\r\n") != std::string::npos)
 		msg.erase(msg.find("\r\n"), 2);
 	if (msg.find(RPL_INVITING) != std::string::npos)
@@ -260,6 +261,7 @@ std::vector<std::string>	Bot::parseWeather(std::string json)
 
 void	Bot::sendPrivmsg(std::string channel, std::string msg)
 {
+	std::cout << "ENVIADO: " << msg << std::endl;
 	sendMessage("PRIVMSG " + channel + " :" + msg);
 }
 
