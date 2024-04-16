@@ -93,7 +93,17 @@ void	Bot::joinHandler(std::string msg)
 void	Bot::kickHandler(std::string msg)
 {
 	std::string channel;
-	channel = msg.substr(msg.find("#"));
+	std::vector<std::string> splitMsg = split(msg, " ");
+	std::vector<std::string>::iterator it;
+
+	for (it = splitMsg.begin(); it != splitMsg.end(); it++)
+	{
+		if ((*it).find("#") != std::string::npos)
+		{
+			channel = *it;
+			break ;
+		}
+	}
 	if (!isInChannel(channel))
 		return ;
 	removeChannel(channel);
@@ -115,8 +125,9 @@ void	Bot::removeChannel(std::string channel)
 
 bool	Bot::isInChannel(std::string channel)
 {
-	std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
-	if (it != channels.end())
-		return (true);
-	return (false);
+	std::vector <std::string>::iterator it;
+	for (it = channels.begin(); it != channels.end(); it++)
+		if (*it == channel)
+			return true;
+	return false;
 }
