@@ -8,7 +8,7 @@ bool	check_port(std::string port)
 		if (!std::isdigit(port[i]))
 			return (false);
 	}
-	port_int = std::stoi(port);
+	port_int = string_to_int(port);
 	if (port_int < 0 || port_int > 65535)
 		return (false);
 	return (true);
@@ -144,4 +144,18 @@ std::string getByKey(std::vector<std::string> json, std::string key)
 		}
 	}
 	return ("");
+}
+
+int string_to_int(std::string number)
+{
+	int value;
+	std::string value_aux;
+
+	std::istringstream stream(number.c_str());
+	stream >> value;
+	if (stream.fail())
+	{
+		return  -1;
+	}
+	return value;
 }

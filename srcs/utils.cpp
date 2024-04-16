@@ -89,3 +89,17 @@ std::string unix_time(void)
 	std::string time = std::to_string(now);
 	return time;
 }
+
+int string_to_int(std::string number)
+{
+	int value;
+	std::string value_aux;
+
+	std::istringstream stream(number.c_str());
+	stream >> value;
+	if (stream.fail())
+	{
+		return  -1;
+	}
+	return value;
+}
