@@ -1,4 +1,5 @@
-NAME = ircserv
+NAME	= ircserv
+BOT		= ircbot
 
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Werror -Wextra -g3
@@ -48,14 +49,24 @@ debug: $(NAME)
 #######################
 #		  Bot         #
 #######################
-bot:
+bot: $(BOT)
+	cp bot/ircbot .
+	cp -rf bot/conf/API.conf ./conf/API.conf
+
+$(BOT):
 	@make -C bot
+
 bot_clean:
 	@make clean -C bot
+
 bot_fclean:
 	@make fclean -C bot
+	@if [ -f "ircbot" ]; then rm ircbot; fi
+	@if [ -f "./conf/API.conf" ]; then rm ./conf/API.conf; fi
 bot_re:
 	@make re -C bot
+	@if [ -f "ircbot" ]; then rm ircbot; fi
+	@if [ -f "./conf/API.conf" ]; then rm ./conf/API.conf; fi
 bot_leaks:
 	@make leaks -C bot
 bot_fd:
@@ -67,4 +78,6 @@ clean:
 fclean: clean
 	rm -rf $(NAME)
 
-.PHONY: re clean fclean debug
+all_clean: fclean bot_fclean
+
+.PHONY: re clean fclean debug all bot bot_clean bot_fclean bot_re bot_leaks bot_fd
