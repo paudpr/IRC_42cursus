@@ -13,4 +13,5 @@ std::string getTime(void);
 size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
 std::vector<std::string> splitJson(std::string str);
 std::string getByKey(std::vector<std::string> json, std::string key);
+int string_to_int(std::string number);
 #endif

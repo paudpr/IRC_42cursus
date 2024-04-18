@@ -1,1 +1,1 @@
-# IRC - 42Madrid
+irc_42cursus

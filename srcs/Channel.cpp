@@ -57,7 +57,7 @@ bool	Channel::handle_mode(bool status, char mode, std::string arg, Client *clien
 		case 'l': // Limit
 			try
 			{
-				change_mode_l(status, std::stoi(arg));
+				change_mode_l(status, string_to_int(arg));
 				return true;
 			}
 			catch(const std::exception& e)

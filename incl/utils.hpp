@@ -10,3 +10,4 @@ std::string get_seconds(std::time_t init_time);
 std::string int_to_string(int num);
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::string unix_time(void);
+int string_to_int(std::string  number);
